@@ -29,7 +29,7 @@ void setup() {
                          // &GAMME_JazzDo2,
                          // &Jazzy3,
                          // &GAMME_La,
-                        //  &GAMME_Lam
+                          &GAMME_Lam
                           };
 
                           
@@ -37,7 +37,7 @@ void setup() {
     Serial.print("\n------\nnow playing: ");
     Serial.println(scales[i]->display_name);
     //LA4_REF = 440.0; // already the default
-    for (int j = -8; j < 8; ++j) {
+    for (int j = -16; j < 16; ++j) {
       
       float freq = getFrequency(j, 5, *scales[i]);
       Serial.print(freq);
@@ -46,7 +46,7 @@ void setup() {
       delay(250);
     }
     LA4_REF = 460;
-    for (int j = -8; j < 8; ++j) {
+    for (int j = -16; j < 16; ++j) {
       
       float freq = getFrequency(j, 5, *scales[i]);
       Serial.print(freq);
