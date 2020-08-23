@@ -1,6 +1,11 @@
 #ifndef HOOK_MATCHING_H
 #define HOOK_MATCHING_H
 
+/* 
+ * please keep this reference in this file when using this code anywhere 
+ * https://github.com/DelTa-B/hook-matching/
+ */
+
 #define NOTE_LINK_LEFT 1
 #define NOTE_LINK_RIGHT 2
 
