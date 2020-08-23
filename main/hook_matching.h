@@ -45,7 +45,9 @@
 static float LA4_REF = 440.0;
 
 
-// modulo that handles correctly negative numbers (only returns positives values)
+/* 
+ * modulo that handles correctly negative numbers (only returns positives values)
+ */
 int hm_mod(int a, int b) 
 {
   if (b < 0)
@@ -55,8 +57,10 @@ int hm_mod(int a, int b)
     ret += b;
   return ret;
 }
-// division that handle correctly negative number (floors to the greatest int lower than or equals to the real value)
-int hm_div(int a, int b) // divide negatively to floor
+/* 
+ * division that handle correctly negative number (floors to the greatest int lower than or equals to the real value) 
+ */
+int hm_div(int a, int b)
 {
   float ret = 1. * a / b;
   if (ret < 0 && (a%b) != 0)
