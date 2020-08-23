@@ -22,24 +22,24 @@ void setup() {
   Serial.begin(9600);
 
   delay (2000);
-  struct scale scales[] = { GAMME_Do,
-                            GAMME_Dom,
-                          //GAMME_DesertDom,
-                         // GAMME_JazzDo,
-                         // GAMME_JazzDo2,
-                         // Jazzy3,
-                         // GAMME_La,
-                        //  GAMME_Lam
+  struct scale *scales[] = { &GAMME_Do,
+                            &GAMME_Dom,
+                          //&GAMME_DesertDom,
+                         // &GAMME_JazzDo,
+                         // &GAMME_JazzDo2,
+                         // &Jazzy3,
+                         // &GAMME_La,
+                        //  &GAMME_Lam
                           };
 
                           
-  for (int i = 0; i < sizeof scales/sizeof (struct scale); ++i) {
+  for (int i = 0; i < sizeof scales/sizeof (struct scale*); ++i) {
     Serial.print("\n------\nnow playing: ");
-    Serial.println(scales[i].display_name);
+    Serial.println(scales[i]->display_name);
     //LA4_REF = 440.0; // already the default
     for (int j = -8; j < 8; ++j) {
       
-      float freq = getFrequency(j, 5, scales[i]);
+      float freq = getFrequency(j, 5, *scales[i]);
       Serial.print(freq);
       Serial.print(",");
       tone(speaker, round(freq), 250);
@@ -48,7 +48,7 @@ void setup() {
     LA4_REF = 460;
     for (int j = -8; j < 8; ++j) {
       
-      float freq = getFrequency(j, 5, scales[i]);
+      float freq = getFrequency(j, 5, *scales[i]);
       Serial.print(freq);
       Serial.print(",");
       tone(speaker, round(freq), 250);
