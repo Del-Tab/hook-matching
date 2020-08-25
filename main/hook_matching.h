@@ -43,8 +43,8 @@
 #define FORCE_NATURAL 4
 
 static float LA4_REF = 440.0;
-
-
+typedef uint8_t note_duration;  // 24 for a black, 48 for a white, handles triolets
+typedef uint8_t note;           // 0 for C, 1 for D, etc.
 /* 
  * modulo that handles correctly negative numbers (only returns positives values)
  * Not tested on compiler that already handle florring of negative numbers correctly but I guess it shall work too ...
@@ -67,18 +67,19 @@ int hm_div(int a, int b)
 {
   float ret = 1. * a / b;
   if ((a%b) < 0) 
-    return (int)ret -1;
+    return (int)ret - 1;
   return (int)ret;
 }
 
 /** scale is a description of the rule on which the note walk. 
  * Definition is made taking the C major scale as reference, which is what you get by only playing white notes on a piano 
  */
-uint8_t diatonic_offsets[] = {0,2,4,5,7,9,11};
+const uint8_t diatonic_offsets[] = {0, 2, 4, 5, 7, 9, 11};
+const uint8_t scaleSize = sizeof diatonic_offsets/sizeof diatonic_offsets[0];
 struct scale {
-  byte sharps;           // binary map from right to left, starting from do: 1 if sharp
-  byte flats;            // binary map from right to left, starting from do: 1 if flat
-  byte note_base;        // the NOTE_something telling which note is the Tonic
+  uint8_t sharps;           // binary map from right to left, starting from do: 1 if sharp
+  uint8_t flats;            // binary map from right to left, starting from do: 1 if flat
+  note note_base;        // the NOTE_something telling which note is the Tonic
   char *display_name;    // a fancy name to display
 };
 /**
@@ -95,20 +96,30 @@ struct scale_hook {
 };
 
 /* return true if the degree in the map is sharp */
-bool isSharp (struct scale g, byte degre) {
-  return (1 << hm_mod(degre + g.note_base,7)) & g.sharps;
+bool isSharp (const struct scale *g, byte degre) {
+  return (1 << hm_mod(degre + g->note_base,7)) & g->sharps;
 }
 
 /* return true if the degree in the map is flat */
-bool isFlat (struct scale g, byte degre) {
-  return (1 << hm_mod(degre + g.note_base,7)) & g.flats;
+bool isFlat (const struct scale *g, byte degre) {
+  return (1 << hm_mod(degre + g->note_base,7)) & g->flats;
 }
 
 /* return true if the degree in the map is neither sharp nor flat */
-bool isNatural (struct scale g, byte degre) {
-  return isSharp(g,degre) ^ isFlat(g,degre);
+bool isNatural (const struct scale *g, byte degre) {
+  return !(isSharp(g,degre) ^ isFlat(g,degre));
 }
 
+uint16_t getMidiNote(const int8_t degree, const uint8_t octave, const struct scale * g) {
+  uint16_t ret = (octave  + hm_div((degree + g->note_base), scaleSize)) * 12 
+         + diatonic_offsets[hm_mod((hm_mod(degree, scaleSize)+ g->note_base), scaleSize)];
+  if (isSharp(g, degree))
+    ++ret;
+  if (isFlat(g, degree))
+    --ret;
+
+  return ret;
+}
 
 
 /**
@@ -117,30 +128,27 @@ bool isNatural (struct scale g, byte degre) {
   
   round(getFrequency(NOTE_SIXTE, 5, GAMME_Do, 0)) must return LA4_REF
 */
-float getFrequency(int8_t degree, uint8_t octave,  struct scale g, int8_t transpose) {
+float getFrequency(const int8_t degree, const uint8_t octave,  const struct scale *g, const int8_t transpose) {
   // Getting base do (C) from current octave ... 
-  int16_t offsetFromLa440 = (octave - 5 + hm_div((degree + g.note_base),sizeof diatonic_offsets/sizeof diatonic_offsets[0])) * 12 - diatonic_offsets[NOTE_SIXTE] + transpose;
-  // adding target note offset from scale base ...
-  offsetFromLa440 += diatonic_offsets[hm_mod((hm_mod(degree,sizeof diatonic_offsets/sizeof diatonic_offsets[0])+ g.note_base),7)]; // we get real note
-  // fixing sharpness :-) 
-  if (isSharp(g, degree))
-    ++offsetFromLa440;
-  if (isFlat(g, degree))
-    --offsetFromLa440;
+  int16_t offsetFromLa440 = getMidiNote(degree, octave, g) + transpose;
+  offsetFromLa440 -= 5*12 + diatonic_offsets[NOTE_SIXTE];
   // getting the right frequency from the ref and offset
   float freq = LA4_REF * pow(2.0, offsetFromLa440/12.0);
   
   return freq;
 }
-float getFrequency(int8_t degree, uint8_t octave,  struct scale g) {
+
+
+
+float getFrequency(int8_t degree, uint8_t octave,  struct scale *g) {
   return getFrequency(degree, octave, g, 0);
 }
-uint8_t getSensible(struct scale scale) {
-  return hm_mod(scale.note_base - 1, 7);
+uint8_t getSensible(const struct scale *scale) {
+  return hm_mod(scale->note_base - 1, 7);
 }
 
-uint8_t getDominante(struct scale scale) {
-  return hm_mod(scale.note_base + 4, 7);
+uint8_t getDominante(const struct scale *scale) {
+  return hm_mod(scale->note_base + 4, 7);
 }
 
 #endif

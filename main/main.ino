@@ -29,7 +29,7 @@ void setup() {
                          // &GAMME_JazzDo2,
                          // &Jazzy3,
                          // &GAMME_La,
-                          &GAMME_Lam
+                          //&GAMME_Lam
                           };
 
                           
@@ -39,7 +39,7 @@ void setup() {
     //LA4_REF = 440.0; // already the default
     for (int j = -16; j < 16; ++j) {
       
-      float freq = getFrequency(j, 5, *scales[i]);
+      float freq = getFrequency(j, 5, scales[i]);
       Serial.print(freq);
       Serial.print(",");
       tone(speaker, round(freq), 250);
