@@ -4,6 +4,7 @@
 /* 
  * please keep this reference in this file when using this code anywhere 
  * https://github.com/DelTa-B/hook-matching/
+ * I would be glad if you give this link when you take part of this file :)
  */
 
 #define NOTE_LINK_LEFT 1
@@ -161,7 +162,9 @@ uint16_t getMidiNote(const int8_t degree, const uint8_t octave, const struct sca
  * Gets frequencies for a diaonic-like scale
  * to be precise (albeit not exact) we work in floats, caller can round it to int if needed 
   
-  round(getFrequency(NOTE_SIXTE, 5, GAMME_Do, 0)) must return LA4_REF
+  contract for not being exact:
+  when partial part of LA4_REF is not close to 0.5,
+  round(getFrequency(NOTE_SIXTE, 5, GAMME_Do, 0)) must return round(LA4_REF)
 */
 float getFrequency(const int8_t degree, const uint8_t octave, struct scale const *g, const int8_t transpose) {
   // Getting base do (C) from current octave ... 
