@@ -120,7 +120,7 @@ void play (const int pin, const struct contextual_scale_hook & partie, const str
   for (int i = 0; i < partie.hook->number; ++i) {
     float freq = getFrequency(partie.note - g->note_base + partie.hook->part[i].degreeOffset, partie.octave, g);
     uint32_t dur = getNoteLengthMillis(partie.hook->part[i].duration, p);
-    tone(pin, round(freq), dur - 25);
+    tone(pin, round(freq), dur - 20);
     delay(dur);
   }
 }
