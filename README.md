@@ -22,6 +22,7 @@ I'll create a branch for each video demo you may find on the web done by me. Bra
  
  
 ## future goals:
+ - learn the English wordings for music stuff and translate it :)
  - clean up the code and make it easy to use
  - add scematics for a decent interface :)
  - play several notes / frequency at the same time (maybe same buzzer, maybe different buzzers)
