@@ -1,9 +1,9 @@
-#include "hook_matching.hpp"
+#include <Arduino.h>
+
+#include "hm_music.hpp"
 
 const uint8_t diatonic_offsets[] = {0, 2, 4, 5, 7, 9, 11};
 const uint8_t scaleSize = sizeof diatonic_offsets/sizeof diatonic_offsets[0];
-
-
 
 
 int hm_mod(int a, int b) 
