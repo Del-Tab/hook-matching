@@ -30,3 +30,9 @@ I'll create a branch for each video demo you may find on the web done by me. Bra
  - detecting notes from audio microphone
  - maybe improvising some day on what the program heard
  - maybe handle some day oriental scales with quart of tone granularity
+
+
+Compile output for this release (programmer = AVRISP MKII, board = Arduino Mega or Mega 2560): 
+
+Sketch uses 7484 bytes (2%) of program storage space. Maximum is 253952 bytes.
+Global variables use 318 bytes (3%) of dynamic memory, leaving 7874 bytes for local variables. Maximum is 8192 bytes.
