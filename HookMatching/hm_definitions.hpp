@@ -86,6 +86,11 @@ struct sheet {
   uint8_t bottom; // if it's 4, blacks are one time unit, if it's 2, white ahre 1 time unit, if it's 8 "croches" are 1 time unit etc
 };
 
+typedef int (*PLAY_CB)(void * context, float freq, uint32_t duration);
 
+struct default_play_context {
+  int pinToPlay;
+};
+int default_play_cb(void * context, float freq, uint32_t duration);
 
 #endif

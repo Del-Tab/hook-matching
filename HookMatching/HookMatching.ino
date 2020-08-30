@@ -74,8 +74,10 @@ void setup() {
   Serial.begin(9600);
 
   delay(2000);
+
+  struct default_play_context myCtx = {speaker};
   for (int i = 0; i < sizeof partition / sizeof partition[0]; ++i) {
-    play(speaker, partition[i], Tourdion);
+    walk(&default_play_cb, &myCtx, partition[i], Tourdion);
   }
   
   delay (2000);

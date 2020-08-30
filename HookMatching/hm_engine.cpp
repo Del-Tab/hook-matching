@@ -24,17 +24,24 @@ int hm_div(int a, int b)
   return (int)ret;
 }
 
-void play (const int pin, const struct contextual_scale_hook & partie, const struct sheet & p, const struct scale *g) {
+int default_play_cb(void * context, float freq, uint32_t duration)
+{
+  default_play_context* ctx = context;
+  tone(ctx->pinToPlay, round(freq), duration - 20);
+  delay(duration);  
+  return 0;
+}
+
+void walk (PLAY_CB play_cb, void *context, const struct contextual_scale_hook & partie, const struct sheet & p, const struct scale *g) {
   for (int i = 0; i < partie.hook->number; ++i) {
     float freq = getFrequency(partie.note - g->note_base + partie.hook->part[i].degreeOffset, partie.octave, g);
     uint32_t dur = getNoteLengthMillis(partie.hook->part[i].duration, p);
-    tone(pin, round(freq), dur - 20);
-    delay(dur);
+    play_cb(context, freq, dur);
   }
 }
 
-void play (const int pin, const struct contextual_scale_hook & partie, const struct sheet & p) {
-  play (pin, partie, p, p.scale);
+void walk (PLAY_CB play_cb, void *context, const struct contextual_scale_hook & partie, const struct sheet & p) {
+  walk (play_cb, context, partie, p, p.scale);
 }
 
 float getFrequency(const int8_t degree, const uint8_t octave, struct scale const *g, const int8_t transpose) {

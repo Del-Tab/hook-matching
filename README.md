@@ -22,11 +22,17 @@ I'll create a branch for each video demo you may find on the web done by me. Bra
  
  
 ## future goals:
+ - represent sheet in classes to simplify writing for non coders
+ - a hook can be a list of hooks, handle max hook recursion level to avoid loops
  - learn the English wordings for music stuff and translate it :)
  - clean up the code and make it easy to use
+ - an engine to find better hook representation for a whole partition
+ - implement a memory pool to avoid malloc fragmentation
  - add scematics for a decent interface :)
  - play several notes / frequency at the same time (maybe same buzzer, maybe different buzzers)
  - Recognizing patterns in music sheets
+ - having 2 states: one playing state and one thinking state (with leds and buttons)
+ - store hooks on sd card after thinking state, play them from sd card when in playing state
  - detecting notes from audio microphone
  - maybe improvising some day on what the program heard
  - maybe handle some day oriental scales with quart of tone granularity

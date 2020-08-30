@@ -20,8 +20,8 @@ int hm_div(int a, int b);
 
 uint32_t getNoteLengthMillis(note_duration nd, const struct sheet & p);
 
-void play (const int pin, const struct contextual_scale_hook & partie, const struct sheet & p, const struct scale *g);
-void play (const int pin, const struct contextual_scale_hook & partie, const struct sheet & p);
+void walk(PLAY_CB play_cb, void *context, const struct contextual_scale_hook & partie, const struct sheet & p, const struct scale *g);
+void walk(PLAY_CB play_cb, void *context, const struct contextual_scale_hook & partie, const struct sheet & p);
 
 
 /* return true if the degree in the map is sharp */
