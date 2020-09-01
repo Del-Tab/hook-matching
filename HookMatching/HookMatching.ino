@@ -20,6 +20,8 @@ struct scale GAMME_Lam = {0, 0, NOTE_LA, "La mineur"};
 // fa et do sont #, note de base = mi
 struct scale miMineur = {B1001,0, NOTE_MI, "mi mineur"};
 
+struct scale miMajeur = {B11011, 0, NOTE_MI, "mi majeur"};
+
 // gamme de mi mineur, 120 bpm (unité de battement = blanche), rythme = 3/2 (3 temps par mesure, unité dde temps = blanche) 
 struct sheet Tourdion = {&miMineur, 120, 48, 3, 2};
 
@@ -68,68 +70,47 @@ contextual_scale_hook partition[] ={
 struct hm_ctx dummyhmctx = {&Tourdion, &GAMME_Do};
 
 
-void dummyPlay(int8_t degree, Playable *p) {
+#define MAX_DEPTH 16
+void dummyPlay(int8_t note, Playable *p) {
 
   boolean noteDummy = true;
-  tone_info ti = p->getNext(&noteDummy, &dummyhmctx, degree, 5);
-  tone(speaker, ti.frequence, ti.duration_ms-15);
-  delay(ti.duration_ms);
+  uint8_t coordinates[MAX_DEPTH] = {0};
+  while (p->hasMore(coordinates, MAX_DEPTH, 0)) {
+    Serial.print("coordinates = {");
+    for (int i = 0; i < MAX_DEPTH; ++i){
+      Serial.print(coordinates[i]);
+      Serial.print(", ");
+    }
+    Serial.println("}");
+    note_info ni = p->getOne(coordinates, MAX_DEPTH, 0);
+    float freq = getFrequency(dummyhmctx.scaleInfo->note_base + note + ni.degreeOffset, 5 + ni.octaveOffset, dummyhmctx.scaleInfo);
+    uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
+     
+    tone(speaker, freq, dur -15);
+    delay(dur);
+  }
 }
 void setup() {
   
   pinMode(speaker, OUTPUT);
   Serial.begin(9600);
 
-  Playable *blanche = new Note(48,0);
-  Playable *croche = new Note(12,0);
-  dummyPlay(0, blanche);
-  for (int i = 0; i < 4; ++i)
-    dummyPlay(1+i, croche);
-  dummyPlay(5, blanche);
+  Playable *blanche = new Note(48);
+  Playable *noire = new Note(24);
+  Playable *croche = new Note(12);
+  ListHook *suite = new ListHook(6);
+  suite->add(blanche);
+  for (int i = 1; i <  5; ++i)
+    suite->add(croche, i);
+  suite->add(blanche,  5 );
+  dummyPlay(NOTE_DO, suite);
+
   
   delay(2000);
 
   struct default_play_context myCtx = {speaker};
   for (int i = 0; i < sizeof partition / sizeof partition[0]; ++i) {
     walk(&default_play_cb, &myCtx, partition[i], Tourdion);
-  }
-  
-  delay (2000);
-  struct scale *scales[] = {// &GAMME_Do,
-                            //&GAMME_Dom,
-                          //&GAMME_DesertDom,
-                         // &GAMME_JazzDo,
-                         // &GAMME_JazzDo2,
-                         // &Jazzy3,
-                         // &GAMME_La,
-                          //&GAMME_Lam
-                          };
-
-                          
-  for (int i = 0; i < sizeof scales/sizeof (struct scale*); ++i) {
-    Serial.print("\n------\nnow playing: ");
-    Serial.println(scales[i]->display_name);
-    //LA4_REF = 440.0; // already the default
-    for (int j = -16; j < 16; ++j) {
-      
-      float freq = getFrequency(j, 5, scales[i]);
-      Serial.print(freq);
-      Serial.print(",");
-      tone(speaker, round(freq), 250);
-      delay(250);
-    }
-    /*
-    LA4_REF = 460;
-    for (int j = -16; j < 16; ++j) {
-      
-      float freq = getFrequency(j, 5, scales[i]);
-      Serial.print(freq);
-      Serial.print(",");
-      tone(speaker, round(freq), 250);
-      delay(250);
-    }
-    delay(1000);
-    */
   }
 }
 
