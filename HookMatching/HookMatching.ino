@@ -1,7 +1,7 @@
 
 #include "hm_music.hpp"
 
-
+#include "HookDef.hpp"
 #define speaker 2 // I'm using digital pin 2 on my mega2560
 
 struct scale GAMME_Do = {0, 0, NOTE_DO, "Do majeur"};
@@ -26,7 +26,6 @@ struct sheet Tourdion = {&miMineur, 120, 48, 3, 2};
 // un hook est une suite de notes, pour l'instant on écrit le nombre de notes du hook,
 // puis un array de couple "offset dans le hook en note sur la portée", "durée logique où la noire vaut 24"
 // je pense qu'on peut faire mieux pour représenter les suites de notes, réflexion en cours
-
 struct scale_hook blanchePointee = { 1, {{0, 72}} };
 struct scale_hook hook1 = { 6, {
                                 {0, 24},
@@ -66,13 +65,28 @@ contextual_scale_hook partition[] ={
   {5, NOTE_MI, &hook1},
   {5, NOTE_MI, &hook3}
 };
+struct hm_ctx dummyhmctx = {&Tourdion, &GAMME_Do};
 
 
+void dummyPlay(int8_t degree, Playable *p) {
+
+  boolean noteDummy = true;
+  tone_info ti = p->getNext(&noteDummy, &dummyhmctx, degree, 5);
+  tone(speaker, ti.frequence, ti.duration_ms-15);
+  delay(ti.duration_ms);
+}
 void setup() {
   
   pinMode(speaker, OUTPUT);
   Serial.begin(9600);
 
+  Playable *blanche = new Note(48,0);
+  Playable *croche = new Note(12,0);
+  dummyPlay(0, blanche);
+  for (int i = 0; i < 4; ++i)
+    dummyPlay(1+i, croche);
+  dummyPlay(5, blanche);
+  
   delay(2000);
 
   struct default_play_context myCtx = {speaker};

@@ -58,6 +58,22 @@ struct scale {
   char *display_name;    // a fancy name to display
 };
 
+typedef struct hook2 *hook2_p;
+struct hook2_placed {
+  int8_t degreeOffset;
+  hook2_p *recur_hook;
+};
+
+
+struct hook2_block {
+  note_duration duration;
+  size_t num;
+  struct hook2_placed placed[];
+};
+struct hook2 {
+  size_t num;
+  struct hook2_block blocks[];
+};
 
 struct hookpart {
   int8_t degreeOffset;
