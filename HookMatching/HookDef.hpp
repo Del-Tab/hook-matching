@@ -1,6 +1,6 @@
 
 #include <Arduino.h>
-#include "hm_music.hpp"
+#include "hm_definitions.hpp"
 struct hm_ctx {
   struct sheet *sheetInfo;
   struct scale *scaleInfo;
