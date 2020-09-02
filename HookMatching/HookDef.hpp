@@ -56,16 +56,17 @@ class Note : public Playable {
     
 };
 
-struct PlayableChild {
-  int8_t degreeOffset;
-  Playable *p;
-};
+
 
 /**
  * A hook that is a list of PlayableChild_s with no relation whatsoever.They are played one after the other
  */
 class ListHook : public Playable {
   private:
+    struct PlayableChild {
+      int8_t degreeOffset;
+      Playable *p;
+    };
     uint8_t capacity; // max 255, todo do better with capacity, maybe use a linked list
     uint8_t number;
     uint8_t maxDepth;
@@ -107,5 +108,4 @@ class ListHook : public Playable {
     uint8_t getMaxDepth() {
       return maxDepth;
     }
-
 };

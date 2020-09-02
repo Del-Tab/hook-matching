@@ -25,49 +25,7 @@ struct scale miMajeur = {B11011, 0, NOTE_MI, "mi majeur"};
 // gamme de mi mineur, 120 bpm (unité de battement = blanche), rythme = 3/2 (3 temps par mesure, unité dde temps = blanche) 
 struct sheet Tourdion = {&miMineur, 120, 48, 3, 2};
 
-// un hook est une suite de notes, pour l'instant on écrit le nombre de notes du hook,
-// puis un array de couple "offset dans le hook en note sur la portée", "durée logique où la noire vaut 24"
-// je pense qu'on peut faire mieux pour représenter les suites de notes, réflexion en cours
-struct scale_hook blanchePointee = { 1, {{0, 72}} };
-struct scale_hook hook1 = { 6, {
-                                {0, 24},
-                                {1, 24},
-                                {2, 24},
-                                {3, 24},
-                                {2, 24},
-                                {1, 24}
-                               }
-                          };
-struct scale_hook hook2 = {7, {
-                               {0, 24},
-                               {1, 24},
-                               {-1, 24},
-                               {0, 48},
-                               {-1, 24},
-                               {-2, 24},
-                               {-3, 48}  
-                              }
-                           };
-struct scale_hook hook3= {6, {
-                                {0, 48},
-                                {2, 48},
-                                {1, 48},
-                                {0, 96},
-                                {-1, 48},
-                                {0, 144}
-                               }
-                          };
-// une suite de hook + portée et note de référence du hook.
-// Ça permet de réutiliser des motifs pour gagner de la  place.
-contextual_scale_hook partition[] ={
-  {5, NOTE_MI, &hook1},
-  {5, NOTE_MI, &blanchePointee},
-  {5, NOTE_FA, &hook1},
-  {5, NOTE_SOL, &hook2},
-  {5, NOTE_MI, &hook1},
-  {5, NOTE_MI, &hook3}
-};
-struct hm_ctx dummyhmctx = {&Tourdion, &GAMME_Do};
+struct hm_ctx dummyhmctx = {&Tourdion, &miMineur};
 
 
 #define MAX_DEPTH 16
@@ -76,17 +34,17 @@ void dummyPlay(int8_t note, Playable *p) {
   boolean noteDummy = true;
   uint8_t coordinates[MAX_DEPTH] = {0};
   while (p->hasMore(coordinates, MAX_DEPTH, 0)) {
-    Serial.print("coordinates = {");
+    /*Serial.print("coordinates = {");
     for (int i = 0; i < MAX_DEPTH; ++i){
       Serial.print(coordinates[i]);
       Serial.print(", ");
     }
-    Serial.println("}");
+    Serial.println("}");*/
     note_info ni = p->getOne(coordinates, MAX_DEPTH, 0);
-    float freq = getFrequency(dummyhmctx.scaleInfo->note_base + note + ni.degreeOffset, 5 + ni.octaveOffset, dummyhmctx.scaleInfo);
+    float freq = getFrequency(note - dummyhmctx.scaleInfo->note_base + ni.degreeOffset, 5 + ni.octaveOffset, dummyhmctx.scaleInfo);
     uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
      
-    tone(speaker, freq, dur -15);
+    tone(speaker, freq, .955*dur);
     delay(dur);
   }
 }
@@ -105,13 +63,37 @@ void setup() {
   suite->add(blanche,  5 );
   dummyPlay(NOTE_DO, suite);
 
-  
   delay(2000);
+  Playable *blanchePointee = new Note(72);
+  Playable *ronde = new Note(96);
+  Playable *rondePointee = new Note(144);
+  Playable *hook1 = (new ListHook(6))->add(noire)
+                                     ->add(noire, 1)
+                                     ->add(noire, 2)
+                                     ->add(noire, 3)
+                                     ->add(noire, 2)
+                                     ->add(noire, 1);
+  Playable *hook2 = (new ListHook(7))->add(noire) 
+                                     ->add(noire,  1)
+                                     ->add(noire, -1)
+                                     ->add(blanche)
+                                     ->add(noire,   -1)
+                                     ->add(noire,   -2)
+                                     ->add(blanche, -3);
+  Playable *hook3 = (new ListHook(6))->add(blanche)
+                                     ->add(blanche,  2)
+                                     ->add(blanche,  1)
+                                     ->add(ronde)
+                                     ->add(blanche, -1)
+                                     ->add(rondePointee);
+  Playable *firstPhrase = (new ListHook(6))->add(hook1)
+                                           ->add(blanchePointee)
+                                           ->add(hook1, 1)
+                                           ->add(hook2, 2)
+                                           ->add(hook1)
+                                           ->add(hook3);
 
-  struct default_play_context myCtx = {speaker};
-  for (int i = 0; i < sizeof partition / sizeof partition[0]; ++i) {
-    walk(&default_play_cb, &myCtx, partition[i], Tourdion);
-  }
+  dummyPlay(NOTE_MI, firstPhrase);
 }
 
 void loop() {
