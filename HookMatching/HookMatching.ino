@@ -2,7 +2,7 @@
 #include "hm_music.hpp"
 
 #include "HookDef.hpp"
-#define speaker 2 // I'm using digital pin 2 on my mega2560
+#define speaker 22 // I'm using digital pin 22 on my mega2560
 
 struct scale GAMME_Do = {0, 0, NOTE_DO, "Do majeur"};
 struct scale GAMME_Dom = {0, B1100100, NOTE_DO, "Do mineur"};
