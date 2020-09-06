@@ -10,7 +10,7 @@ struct scale GAMME_DesertDom = {0, B100100, NOTE_DO , "Do senteur desert"};
 struct scale GAMME_JazzDo = {// do, ré#, mi#, fa#, sol, lab,sib 
  B1110, B1100000, NOTE_DO, "Jazzy Do"
 };
-struct scale GAMME_JazzDo2 ={ //dob, ré#, mi#, fa#, sol, la#,si#
+struct scale GAMME_JazzDo2 ={ //dob, ré#, mi#, fa#, sol, la#, si#
   B1101110, B1, NOTE_DO, "Jazzy Do v2"
 };
 struct scale Jazzy3 = {B101110, 0, NOTE_DO, "jazzy 3"};
@@ -30,8 +30,6 @@ struct hm_ctx dummyhmctx = {&Tourdion, &miMineur};
 
 #define MAX_DEPTH 16
 void dummyPlay(int8_t note, Playable *p) {
-
-  boolean noteDummy = true;
   uint8_t coordinates[MAX_DEPTH] = {0};
   while (p->hasMore(coordinates, MAX_DEPTH, 0)) {
     /*Serial.print("coordinates = {");
@@ -48,22 +46,12 @@ void dummyPlay(int8_t note, Playable *p) {
     delay(dur);
   }
 }
-void setup() {
   
-  pinMode(speaker, OUTPUT);
-  Serial.begin(9600);
-
+unsigned long nextPlayedNode = 0;
+int state = 0;//playing
   Playable *blanche = new Note(48);
   Playable *noire = new Note(24);
   Playable *croche = new Note(12);
-  ListHook *suite = new ListHook(6);
-  suite->add(blanche);
-  for (int i = 1; i <  5; ++i)
-    suite->add(croche, i);
-  suite->add(blanche,  5 );
-  dummyPlay(NOTE_DO, suite);
-
-  delay(2000);
   Playable *blanchePointee = new Note(72);
   Playable *ronde = new Note(96);
   Playable *rondePointee = new Note(144);
@@ -92,12 +80,41 @@ void setup() {
                                            ->add(hook2, 2)
                                            ->add(hook1)
                                            ->add(hook3);
+void setup() {
+  
+  pinMode(speaker, OUTPUT);
+  Serial.begin(9600);
 
-  dummyPlay(NOTE_MI, firstPhrase);
+  // play some jingle in the set scale
+  ListHook *suite = new ListHook(6);
+  suite->add(blanche);
+  for (int i = 1; i <  5; ++i)
+    suite->add(croche, i);
+  suite->add(blanche,  5 );
+  dummyPlay(NOTE_DO, suite);
+
+  delay(2000);
 }
-
+uint8_t coordinates[MAX_DEPTH] = {0};
+Playable *playMe = firstPhrase;
 void loop() {
 // put your main code here, to run repeatedly:
-  
-  delay(10000);  
+  if (state == 0) {
+    if (nextPlayedNode <= millis()) {
+      if (playMe->hasMore(coordinates, MAX_DEPTH, 0)) {
+        note_info ni = playMe->getOne(coordinates, MAX_DEPTH, 0);
+        // main hook is expressed in base note from the scale
+        float freq = getFrequency(/*note - dummyhmctx.scaleInfo->note_base +*/ ni.degreeOffset, 5 + ni.octaveOffset, dummyhmctx.scaleInfo);
+        uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
+     
+        tone(speaker, freq, .955*dur);
+        // we take into accound this loop's calculus time
+        nextPlayedNode = millis() + dur;
+      }else {
+        state = 1;
+      }
+    }
+  } else {
+    delay(10000);
+  }  
 }
