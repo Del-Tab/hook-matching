@@ -2,20 +2,12 @@
 #include "hm_music.hpp"
 
 #include "HookDef.hpp"
-#define speaker 22 // I'm using digital pin 22 on my mega2560
+#define speaker 22  // I'm using digital pin 22 on my mega2560
+#define stateLed 23 // digital pin 23 will be on on playing state
+#define pulseLed 2  // pwm pin 2 will give the pulse
+
 
 struct scale GAMME_Do = {0, 0, NOTE_DO, "Do majeur"};
-struct scale GAMME_Dom = {0, B1100100, NOTE_DO, "Do mineur"};
-struct scale GAMME_DesertDom = {0, B100100, NOTE_DO , "Do senteur desert"};
-struct scale GAMME_JazzDo = {// do, ré#, mi#, fa#, sol, lab,sib 
- B1110, B1100000, NOTE_DO, "Jazzy Do"
-};
-struct scale GAMME_JazzDo2 ={ //dob, ré#, mi#, fa#, sol, la#, si#
-  B1101110, B1, NOTE_DO, "Jazzy Do v2"
-};
-struct scale Jazzy3 = {B101110, 0, NOTE_DO, "jazzy 3"};
-struct scale GAMME_La = {B11001, 0, NOTE_LA, "La majeur"};
-struct scale GAMME_Lam = {0, 0, NOTE_LA, "La mineur"};
 
 // fa et do sont #, note de base = mi
 struct scale miMineur = {B1001,0, NOTE_MI, "mi mineur"};
@@ -48,13 +40,14 @@ void dummyPlay(int8_t note, Playable *p) {
 }
   
 unsigned long nextPlayedNode = 0;
-int state = 0;//playing
+
   Playable *blanche = new Note(48);
   Playable *noire = new Note(24);
   Playable *croche = new Note(12);
   Playable *blanchePointee = new Note(72);
   Playable *ronde = new Note(96);
   Playable *rondePointee = new Note(144);
+  Playable *fullCase = new Note(dummyhmctx.sheetInfo->top * dummyhmctx.sheetInfo->bottom * 24);
   Playable *hook1 = (new ListHook(6))->add(noire)
                                      ->add(noire, 1)
                                      ->add(noire, 2)
@@ -83,6 +76,8 @@ int state = 0;//playing
 void setup() {
   
   pinMode(speaker, OUTPUT);
+  pinMode(stateLed, OUTPUT);
+  pinMode(pulseLed, OUTPUT);
   Serial.begin(9600);
 
   // play some jingle in the set scale
@@ -94,9 +89,11 @@ void setup() {
   dummyPlay(NOTE_DO, suite);
 
   delay(2000);
+  digitalWrite(stateLed, HIGH);
 }
 uint8_t coordinates[MAX_DEPTH] = {0};
-Playable *playMe = firstPhrase;
+Playable *playMe = (new ListHook(3))->add(fullCase,0,NOTE_IS_SILENCE)->add(fullCase,0,NOTE_IS_SILENCE)->add(firstPhrase);
+int state = 0;//playing
 void loop() {
 // put your main code here, to run repeatedly:
   if (state == 0) {
@@ -106,12 +103,14 @@ void loop() {
         // main hook is expressed in base note from the scale
         float freq = getFrequency(/*note - dummyhmctx.scaleInfo->note_base +*/ ni.degreeOffset, 5 + ni.octaveOffset, dummyhmctx.scaleInfo);
         uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
-     
-        tone(speaker, freq, .955*dur);
+
+        if ((ni.flags & NOTE_IS_SILENCE) == 0)
+          tone(speaker, freq, .955*dur);
         // we take into accound this loop's calculus time
         nextPlayedNode = millis() + dur;
       }else {
         state = 1;
+        digitalWrite(stateLed,LOW);
       }
     }
   } else {

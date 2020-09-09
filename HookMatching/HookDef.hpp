@@ -6,13 +6,14 @@ struct hm_ctx {
   struct scale *scaleInfo;
 };
 
-#define NOTE_IS_SILENCE = 1;
-#define NOTE_STICKS_TO_NEXT = 2;
+#define NOTE_IS_SILENCE 1
+#define NOTE_STICKS_TO_NEXT 2
 
 struct note_info{
   int8_t degreeOffset;
   uint8_t octaveOffset;
   note_duration duration;
+  uint8_t flags;
 };
 
 class Playable {
@@ -65,6 +66,7 @@ class ListHook : public Playable {
   private:
     struct PlayableChild {
       int8_t degreeOffset;
+      uint8_t flags;
       Playable *p;
     };
     uint8_t capacity; // max 255, todo do better with capacity, maybe use a linked list
@@ -81,9 +83,10 @@ class ListHook : public Playable {
       };
   public:
     ListHook(size_t _capacity) : capacity(_capacity), number(0), maxDepth(0) { list = malloc(capacity * sizeof(struct PlayableChild)); };
-    ListHook *add(Playable *p) {return add(p, 0); };
-    ListHook *add(Playable *p, int8_t degreeOffset) {
-      list[number++] = {degreeOffset, p->useAgain()};
+    ListHook *add(Playable *p) {return add(p, 0, 0); };
+    ListHook *add(Playable *p, int8_t degreeOffset) {return add(p, degreeOffset, 0); };
+    ListHook *add(Playable *p, int8_t degreeOffset, uint8_t flags) {
+      list[number++] = {degreeOffset, flags, p->useAgain()};
       maxDepth = max(maxDepth, p->getMaxDepth());
       return this;
     }
@@ -101,6 +104,9 @@ class ListHook : public Playable {
         hc[depth + 1] = 0;
         ++(hc[depth]);
       }
+      childOne.flags |= pc.flags;
+      Serial.print("childOne.flags = ");
+      Serial.println(childOne.flags);
       // correction with the current structure's offset :) 
       childOne.degreeOffset += pc.degreeOffset;
       return childOne;
