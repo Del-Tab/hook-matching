@@ -6,8 +6,8 @@ struct hm_ctx {
   struct scale *scaleInfo;
 };
 
-#define NOTE_IS_SILENCE 1
-#define NOTE_STICKS_TO_NEXT 2
+
+
 
 struct note_info{
   int8_t degreeOffset;
@@ -57,7 +57,42 @@ class Note : public Playable {
     
 };
 
+/**
+ * A hook that repeats the inner Hook N times, or every time if N is 0
+ */
+class RepeatHook : public Playable {
+  private:
+    Playable *p;
+    int nb_cycles;
+    uint8_t maxDepth;
+    ~RepeatHook() {
+      p->unuse();
+    }
+  public:
+    RepeatHook(Playable *_p) : RepeatHook(_p, 0) { };
+    RepeatHook(Playable *_p, int _nb_cycles) : p(_p->useAgain()), nb_cycles(_nb_cycles), maxDepth(_p->getMaxDepth()) { };
+    
+    boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth) {
+      if (nb_cycles == 0)
+        return true;
+      if (hc[depth] >= nb_cycles) 
+        return false;
+      return p->hasMore(hc, maxDepth, depth + 1);
+    };
 
+    struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth) {
+      note_info childOne = p->getOne(hc, maxDepth, depth + 1);
+      if (!p->hasMore(hc, maxDepth, depth + 1)) {
+        hc[depth + 1] = 0;
+        ++(hc[depth]);
+      }
+      return childOne;
+    }
+
+    uint8_t getMaxDepth() {
+      return maxDepth;
+    }
+};
 
 /**
  * A hook that is a list of PlayableChild_s with no relation whatsoever.They are played one after the other
@@ -82,12 +117,16 @@ class ListHook : public Playable {
         }
       };
   public:
-    ListHook(size_t _capacity) : capacity(_capacity), number(0), maxDepth(0) { list = malloc(capacity * sizeof(struct PlayableChild)); };
+    ListHook(uint16_t _capacity) : capacity(_capacity), number(0), maxDepth(0) {
+      list = malloc(_capacity * sizeof(struct PlayableChild));
+      if (list == NULL)
+        Serial.println("malloc error");
+    };
     ListHook *add(Playable *p) {return add(p, 0, 0); };
     ListHook *add(Playable *p, int8_t degreeOffset) {return add(p, degreeOffset, 0); };
     ListHook *add(Playable *p, int8_t degreeOffset, uint8_t flags) {
       list[number++] = {degreeOffset, flags, p->useAgain()};
-      maxDepth = max(maxDepth, p->getMaxDepth());
+      maxDepth = max(maxDepth, p->getMaxDepth() + 1);
       return this;
     }
     boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth){
@@ -105,8 +144,6 @@ class ListHook : public Playable {
         ++(hc[depth]);
       }
       childOne.flags |= pc.flags;
-      Serial.print("childOne.flags = ");
-      Serial.println(childOne.flags);
       // correction with the current structure's offset :) 
       childOne.degreeOffset += pc.degreeOffset;
       return childOne;

@@ -14,6 +14,7 @@ struct scale miMineur = {B1001,0, NOTE_MI, "mi mineur"};
 
 struct scale miMajeur = {B11011, 0, NOTE_MI, "mi majeur"};
 
+// E minor scale, 120 bpm (unit = halfbeat), 3/2 time signature
 // gamme de mi mineur, 120 bpm (unité de battement = blanche), rythme = 3/2 (3 temps par mesure, unité dde temps = blanche) 
 struct sheet Tourdion = {&miMineur, 120, 48, 3, 2};
 
@@ -38,41 +39,80 @@ void dummyPlay(int8_t note, Playable *p) {
     delay(dur);
   }
 }
-  
-unsigned long nextPlayedNode = 0;
 
-  Playable *blanche = new Note(48);
-  Playable *noire = new Note(24);
-  Playable *croche = new Note(12);
-  Playable *blanchePointee = new Note(72);
-  Playable *ronde = new Note(96);
-  Playable *rondePointee = new Note(144);
+
+  Playable *blanche = new Note(48);             //half
+  Playable *noire = new Note(24);               //quarter
+  Playable *croche = new Note(12);              //eight's
+  Playable *blanchePointee = new Note(72);      //dottedHalf
+  Playable *ronde = new Note(96);               //full
+  Playable *rondePointee = new Note(144);       //dottedFull
   Playable *fullCase = new Note(dummyhmctx.sheetInfo->top * dummyhmctx.sheetInfo->bottom * 24);
-  Playable *hook1 = (new ListHook(6))->add(noire)
+  Playable *hook1_1 = (new ListHook(6))->add(noire)
                                      ->add(noire, 1)
                                      ->add(noire, 2)
                                      ->add(noire, 3)
                                      ->add(noire, 2)
                                      ->add(noire, 1);
-  Playable *hook2 = (new ListHook(7))->add(noire) 
+  Playable *hook1_2 = (new ListHook(7))->add(noire) 
                                      ->add(noire,  1)
                                      ->add(noire, -1)
                                      ->add(blanche)
                                      ->add(noire,   -1)
                                      ->add(noire,   -2)
                                      ->add(blanche, -3);
-  Playable *hook3 = (new ListHook(6))->add(blanche)
+  Playable *hook1_3 = (new ListHook(6))->add(blanche)
                                      ->add(blanche,  2)
                                      ->add(blanche,  1)
                                      ->add(ronde)
                                      ->add(blanche, -1)
                                      ->add(rondePointee);
-  Playable *firstPhrase = (new ListHook(6))->add(hook1)
+  Playable *firstPhrase = (new ListHook(6))->add(hook1_1)
                                            ->add(blanchePointee)
-                                           ->add(hook1, 1)
-                                           ->add(hook2, 2)
-                                           ->add(hook1)
-                                           ->add(hook3);
+                                           ->add(hook1_1, 1)
+                                           ->add(hook1_2, 2)
+                                           ->add(hook1_1)
+                                           ->add(hook1_3);
+  Playable *hook2_1 = (new ListHook(4))->add(blanchePointee)
+                                       ->add(noire, -1)
+                                       ->add(noire)
+                                       ->add(noire,  1);
+  Playable *hook2_2 = (new ListHook(11))->add(ronde)
+                                        ->add(blanche)
+                                        ->add(noire,  2)
+                                        ->add(noire, 1)//, NOTE_FORCE_SHARP) // add sharp
+                                        ->add(noire)
+                                        ->add(noire, -1)
+                                        ->add(noire, -2)
+                                        ->add(noire, -3)
+                                        ->add(blanchePointee, -2)
+                                        ->add(noire, -3)
+                                        ->add(blanche, -4)
+                          ;
+                                        
+  Playable *hook2_3 = (new ListHook(7))->add(blanchePointee)
+                                      ->add(noire, -1)
+                                      ->add(noire, -2)
+                                      ->add(noire, -3)
+                                      ->add(ronde, -4)
+                                      ->add(blanche, -5)
+                                      ->add(rondePointee, -4);
+  Playable *secondPhrase = (new ListHook(4))->add(hook2_1)
+                                            ->add(hook2_2)
+                                            ->add(hook2_1)
+                                            ->add(hook2_3);
+  
+  Playable *fullTourdion = (new ListHook(3))->add(new RepeatHook(firstPhrase, 2))
+                                             ->add(new RepeatHook(secondPhrase, 2), 4)
+                                             ->add(firstPhrase);
+                                             
+                                            
+  
+  Playable *beat = new RepeatHook(
+                         (new ListHook(3))->add(blanche, 16)
+                                          ->add(blanche, 4)
+                                          ->add(blanche, 4)
+                                 );
 void setup() {
   
   pinMode(speaker, OUTPUT);
@@ -92,28 +132,61 @@ void setup() {
   digitalWrite(stateLed, HIGH);
 }
 uint8_t coordinates[MAX_DEPTH] = {0};
-Playable *playMe = (new ListHook(3))->add(fullCase,0,NOTE_IS_SILENCE)->add(fullCase,0,NOTE_IS_SILENCE)->add(firstPhrase);
+uint8_t beatCoordinates[MAX_DEPTH] = {0};
+unsigned long nextPlayedNode = 0;
+unsigned long nextPlayedBeat = 0;
+float brightness = 0;
+Playable *playMe = (new ListHook(4))->add(fullCase, 0, NOTE_IS_SILENCE)->add(fullCase, 0, NOTE_IS_SILENCE)
+                                    ->add(fullTourdion)
+                                    ->add(fullCase, 0, NOTE_IS_SILENCE);
 int state = 0;//playing
 void loop() {
 // put your main code here, to run repeatedly:
+  //fade by step
+  if (brightness > 0) {
+    brightness -=.025;
+    if (brightness < 0)
+      brightness = 0;
+    analogWrite(pulseLed, brightness);
+  }
   if (state == 0) {
-    if (nextPlayedNode <= millis()) {
+    unsigned long currentMillis = millis();
+    
+    if (nextPlayedNode <= currentMillis) {
       if (playMe->hasMore(coordinates, MAX_DEPTH, 0)) {
         note_info ni = playMe->getOne(coordinates, MAX_DEPTH, 0);
         // main hook is expressed in base note from the scale
-        float freq = getFrequency(/*note - dummyhmctx.scaleInfo->note_base +*/ ni.degreeOffset, 5 + ni.octaveOffset, dummyhmctx.scaleInfo);
+        int8_t transpose = 0;
+        if ((ni.flags & NOTE_FORCE_SHARP) && (!isSharp(ni.degreeOffset, dummyhmctx.scaleInfo)))
+          ++transpose;
+        if ((ni.flags & NOTE_FORCE_FLAT) && (!isFlat(ni.degreeOffset, dummyhmctx.scaleInfo)))
+          --transpose;
+        if ((ni.flags & NOTE_FORCE_NATURAL)) {
+          if (isFlat(ni.degreeOffset, dummyhmctx.scaleInfo))
+            ++transpose;
+          if (isSharp(ni.degreeOffset, dummyhmctx.scaleInfo))
+            --transpose;
+        }
+        float freq = getFrequency( ni.degreeOffset, 5 + ni.octaveOffset, dummyhmctx.scaleInfo, transpose);
         uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
 
         if ((ni.flags & NOTE_IS_SILENCE) == 0)
           tone(speaker, freq, .955*dur);
+      
+        
         // we take into accound this loop's calculus time
-        nextPlayedNode = millis() + dur;
+        nextPlayedNode = currentMillis + dur;
       }else {
         state = 1;
         digitalWrite(stateLed,LOW);
       }
     }
-  } else {
-    delay(10000);
+    if (nextPlayedBeat <= currentMillis) {
+      note_info ni = beat->getOne(beatCoordinates, MAX_DEPTH, 0);
+      uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
+      brightness = map((uint8_t) ni.degreeOffset, 0, 16, 0, 255);
+      analogWrite(pulseLed, brightness);
+      nextPlayedBeat = currentMillis + dur;
+    }
   }  
 }

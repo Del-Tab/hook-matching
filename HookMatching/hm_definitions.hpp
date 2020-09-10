@@ -7,8 +7,11 @@
  * I would be glad if you give this link when you take part of this file :)
  */
 
-#define NOTE_LINK_LEFT 1
-#define NOTE_LINK_RIGHT 2
+#define NOTE_IS_SILENCE 1
+#define NOTE_STICKS_TO_NEXT 2
+#define NOTE_FORCE_SHARP 4
+#define NOTE_FORCE_FLAT 8
+#define NOTE_FORCE_NATURAL 16
 
 #define NOTE_DO 0
 #define NOTE_RE 1
