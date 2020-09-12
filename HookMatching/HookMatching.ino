@@ -9,7 +9,7 @@
 
 struct scale GAMME_Do = {0, 0, NOTE_DO, "Do majeur"};
 
-// fa et do sont #, note de base = mi
+// fa est #, note de base = mi
 struct scale miMineur = {B1000,0, NOTE_MI, "mi mineur"};
 
 // fa est diese
@@ -164,14 +164,16 @@ void loop() {
         int8_t transpose;
         transpose = 0;
         Serial.print("flags = ");Serial.println(ni.flags);
-        if ((ni.flags & NOTE_FORCE_SHARP) && (!isSharp(ni.degreeOffset, dummyhmctx.scaleInfo)))
+
+       
+        if ((ni.flags & NOTE_FORCE_SHARP) && (!isSharp(dummyhmctx.scaleInfo, ni.degreeOffset)))
           ++transpose;
-        if ((ni.flags & NOTE_FORCE_FLAT) && (!isFlat(ni.degreeOffset, dummyhmctx.scaleInfo)))
+        if ((ni.flags & NOTE_FORCE_FLAT) && (!isFlat(dummyhmctx.scaleInfo, ni.degreeOffset)))
           --transpose;
         if ((ni.flags & NOTE_FORCE_NATURAL)) {
-          if (isFlat(ni.degreeOffset, dummyhmctx.scaleInfo))
+          if (isFlat(dummyhmctx.scaleInfo, ni.degreeOffset))
             ++transpose;
-          if (isSharp(ni.degreeOffset, dummyhmctx.scaleInfo))
+          if (isSharp(dummyhmctx.scaleInfo, ni.degreeOffset))
             --transpose;
         }
         Serial.print("transpose = ");Serial.println(transpose);

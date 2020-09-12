@@ -71,7 +71,7 @@ uint32_t getNoteLengthMillis(note_duration nd, const struct sheet & p) {
 }
 
 bool isSharp (const struct scale *g, byte degre) {
-  return (1 << hm_mod(degre + g->note_base,7)) & g->sharps;
+  return (1 << hm_mod(degre + g->note_base, 7)) & g->sharps;
 }
 
 bool isFlat (const struct scale *g, byte degre) {
