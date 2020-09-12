@@ -1,12 +1,13 @@
 #ifndef HM_DEFINITONS_HPP
 #define HM_DEFINITONS_HPP
 
-/* 
- * please keep this reference in this file when using this code anywhere 
- * https://github.com/DelTa-B/hook-matching/
- * I would be glad if you give this link when you take part of this file :)
- */
-
+/*
+   please keep this reference in this file when using this code anywhere
+   https://github.com/DelTa-B/hook-matching/
+   I would be glad if you give this link when you take part of this file :)
+*/
+//typedef uint8_t effects;
+#define effects uint8_t
 #define NOTE_IS_SILENCE 1
 #define NOTE_STICKS_TO_NEXT 2
 #define NOTE_FORCE_SHARP 4
@@ -50,9 +51,9 @@ static float LA4_REF = 440.0;
 typedef uint8_t note_duration;  // 24 for a black, 48 for a white, handles triolets
 typedef uint8_t note;           // 0 for C, 1 for D, etc.
 
-/** scale is a description of the rule on which the note walk. 
- * Definition is made taking the C major scale as reference, which is what you get by only playing white notes on a piano 
- */
+/** scale is a description of the rule on which the note walk.
+   Definition is made taking the C major scale as reference, which is what you get by only playing white notes on a piano
+*/
 
 struct scale {
   uint8_t sharps;        // binary map from right to left, starting from do: 1 if sharp
@@ -89,7 +90,7 @@ struct scale_hook {
 };
 
 struct contextual_scale_hook {
-  
+
   uint8_t octave;
   uint8_t note;
   struct scale_hook *hook;

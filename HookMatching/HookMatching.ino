@@ -10,7 +10,11 @@
 struct scale GAMME_Do = {0, 0, NOTE_DO, "Do majeur"};
 
 // fa et do sont #, note de base = mi
-struct scale miMineur = {B1001,0, NOTE_MI, "mi mineur"};
+struct scale miMineur = {B1000,0, NOTE_MI, "mi mineur"};
+
+// fa est diese
+struct scale solMajeur = {B1000, 0, NOTE_SOL, "sol majeur"};
+
 
 struct scale miMajeur = {B11011, 0, NOTE_MI, "mi majeur"};
 
@@ -80,7 +84,7 @@ void dummyPlay(int8_t note, Playable *p) {
   Playable *hook2_2 = (new ListHook(11))->add(ronde)
                                         ->add(blanche)
                                         ->add(noire,  2)
-                                        ->add(noire, 1)//, NOTE_FORCE_SHARP) // add sharp
+                                        ->add(noire, 1, NOTE_FORCE_SHARP) // add sharp
                                         ->add(noire)
                                         ->add(noire, -1)
                                         ->add(noire, -2)
@@ -89,7 +93,7 @@ void dummyPlay(int8_t note, Playable *p) {
                                         ->add(noire, -3)
                                         ->add(blanche, -4)
                           ;
-                                        
+  Playable *test = new RepeatHook(hook2_2);
   Playable *hook2_3 = (new ListHook(7))->add(blanchePointee)
                                       ->add(noire, -1)
                                       ->add(noire, -2)
@@ -137,6 +141,7 @@ unsigned long nextPlayedNode = 0;
 unsigned long nextPlayedBeat = 0;
 float brightness = 0;
 Playable *playMe = (new ListHook(4))->add(fullCase, 0, NOTE_IS_SILENCE)->add(fullCase, 0, NOTE_IS_SILENCE)
+                                    //->add(test,4)
                                     ->add(fullTourdion)
                                     ->add(fullCase, 0, NOTE_IS_SILENCE);
 int state = 0;//playing
@@ -156,7 +161,9 @@ void loop() {
       if (playMe->hasMore(coordinates, MAX_DEPTH, 0)) {
         note_info ni = playMe->getOne(coordinates, MAX_DEPTH, 0);
         // main hook is expressed in base note from the scale
-        int8_t transpose = 0;
+        int8_t transpose;
+        transpose = 0;
+        Serial.print("flags = ");Serial.println(ni.flags);
         if ((ni.flags & NOTE_FORCE_SHARP) && (!isSharp(ni.degreeOffset, dummyhmctx.scaleInfo)))
           ++transpose;
         if ((ni.flags & NOTE_FORCE_FLAT) && (!isFlat(ni.degreeOffset, dummyhmctx.scaleInfo)))
@@ -167,6 +174,7 @@ void loop() {
           if (isSharp(ni.degreeOffset, dummyhmctx.scaleInfo))
             --transpose;
         }
+        Serial.print("transpose = ");Serial.println(transpose);
         float freq = getFrequency( ni.degreeOffset, 5 + ni.octaveOffset, dummyhmctx.scaleInfo, transpose);
         uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
 
