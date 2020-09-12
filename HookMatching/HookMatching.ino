@@ -17,8 +17,8 @@ struct scale Jazzy3 = {B101110, 0, NOTE_DO, "jazzy 3"};
 struct scale GAMME_La = {B11001, 0, NOTE_LA, "La majeur"};
 struct scale GAMME_Lam = {0, 0, NOTE_LA, "La mineur"};
 
-// fa et do sont #, note de base = mi
-struct scale miMineur = {B1001,0, NOTE_MI, "mi mineur"};
+// fa #, note de base = mi
+struct scale miMineur = {B1000,0, NOTE_MI, "mi mineur"};
 
 // gamme de mi mineur, 120 bpm (unité de battement = blanche), rythme = 3/2 (3 temps par mesure, unité dde temps = blanche) 
 struct sheet Tourdion = {&miMineur, 120, 48, 3, 2};
