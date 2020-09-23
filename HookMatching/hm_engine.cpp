@@ -26,8 +26,8 @@ int hm_div(int a, int b)
 
 int default_play_cb(void * context, float freq, uint32_t duration)
 {
-  default_play_context* ctx = context;
-  tone(ctx->pinToPlay, round(freq), duration - 20);
+  struct default_play_context* ctx = context;
+  ctx->voice.play(round(freq), duration - 20);
   delay(duration);  
   return 0;
 }

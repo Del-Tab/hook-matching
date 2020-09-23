@@ -1,11 +1,12 @@
 
 #include "hm_music.hpp"
-
 #include "HookDef.hpp"
-#define speaker 22  // I'm using digital pin 22 on my mega2560
+#include <Tone.h>
+#define voicePin1 22  // I'm using digital pin 22 on my mega2560
+#define voicePin2 24
 #define stateLed 23 // digital pin 23 will be on on playing state
 #define pulseLed 2  // pwm pin 2 will give the pulse
-
+Tone voice1,voice2;
 
 struct scale GAMME_Do = {0, 0, NOTE_DO, "Do majeur"};
 
@@ -29,9 +30,9 @@ struct hm_ctx dummyhmctx = {&Tourdion, &miMineur};
 void dummyPlay(int8_t note, Playable *p) {
   uint8_t coordinates[MAX_DEPTH] = {0};
   while (p->hasMore(coordinates, MAX_DEPTH, 0)) {
-    /*Serial.print("coordinates = {");
+    /*Serial.print("coordinates1 = {");
     for (int i = 0; i < MAX_DEPTH; ++i){
-      Serial.print(coordinates[i]);
+      Serial.print(coordinates1[i]);
       Serial.print(", ");
     }
     Serial.println("}");*/
@@ -39,7 +40,7 @@ void dummyPlay(int8_t note, Playable *p) {
     float freq = getFrequency(note - dummyhmctx.scaleInfo->note_base + ni.degreeOffset, 5 + ni.octaveOffset, dummyhmctx.scaleInfo);
     uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
      
-    tone(speaker, freq, .955*dur);
+    voice1.play(freq, .955*dur);
     delay(dur);
   }
 }
@@ -106,20 +107,53 @@ void dummyPlay(int8_t note, Playable *p) {
                                             ->add(hook2_1)
                                             ->add(hook2_3);
   
-  Playable *fullTourdion = (new ListHook(3))->add(new RepeatHook(firstPhrase, 2))
+  Playable *fullAlto = (new ListHook(3))->add(new RepeatHook(firstPhrase, 2))
                                              ->add(new RepeatHook(secondPhrase, 2), 4)
                                              ->add(firstPhrase);
                                              
-                                            
-  
+  Playable *b_Hook1_1 = (new ListHook(2))->add(ronde)
+                                         ->add(blanche);
+
+  Playable *b_Hook1_2 = (new ListHook(5))->add(blanche)
+                                         ->add(blanche, 2)
+                                         ->add(blanche, 1)
+                                         ->add(blanche, -2)
+                                         ->add(ronde, -1);
+  Playable *b_Hook1_3 = (new ListHook(5))->add(ronde)
+                                         ->add(blanche, -1)
+                                         ->add(blanche)
+                                         ->add(ronde, -3)
+                                         ->add(rondePointee);
+  Playable *b_Hook2_1 = (new ListHook(5))->add(ronde)
+                                         ->add(blanche, -3)
+                                         ->add(blanche, -2)
+                                         ->add(ronde, -5)
+                                         ->add(rondePointee, -2);
+  Playable *b_firstPhrase = (new ListHook(4))->add(new RepeatHook(b_Hook1_1, 2))
+                                             ->add(b_Hook1_2, 2)
+                                             ->add(b_Hook1_1)
+                                             ->add(b_Hook1_3);
+  Playable *b_secondPhrase = (new ListHook(6))->add(b_Hook1_1)
+                                              ->add(b_Hook1_1, 2)
+                                              ->add(b_Hook1_1, -1)
+                                              ->add(b_Hook1_1)
+                                              ->add(b_Hook1_1, 2)
+                                              ->add(b_Hook2_1, 2);
+  Playable *fullHommes = (new ListHook(3))->add(new RepeatHook(b_firstPhrase, 2))
+                                             ->add(new RepeatHook(b_secondPhrase, 2))
+                                             ->add(b_firstPhrase);                                           
+                                              
+                                          
   Playable *beat = new RepeatHook(
                          (new ListHook(3))->add(blanche, 16)
                                           ->add(blanche, 4)
                                           ->add(blanche, 4)
                                  );
 void setup() {
+  voice1.begin(voicePin1);
+  voice2.begin(voicePin2);
   
-  pinMode(speaker, OUTPUT);
+  pinMode(voicePin1, OUTPUT);
   pinMode(stateLed, OUTPUT);
   pinMode(pulseLed, OUTPUT);
   Serial.begin(9600);
@@ -135,15 +169,20 @@ void setup() {
   delay(2000);
   digitalWrite(stateLed, HIGH);
 }
-uint8_t coordinates[MAX_DEPTH] = {0};
+uint8_t coordinates1[MAX_DEPTH] = {0};
+uint8_t coordinates2[MAX_DEPTH] = {0};
 uint8_t beatCoordinates[MAX_DEPTH] = {0};
-unsigned long nextPlayedNode = 0;
+unsigned long nextPlayedNote1 = 0;
+unsigned long nextPlayedNote2 = 0;
 unsigned long nextPlayedBeat = 0;
 float brightness = 0;
-Playable *playMe = (new ListHook(4))->add(fullCase, 0, NOTE_IS_SILENCE)->add(fullCase, 0, NOTE_IS_SILENCE)
+Playable *playVoice1 = (new ListHook(4))->add(fullCase, 0, NOTE_IS_SILENCE)->add(fullCase, 0, NOTE_IS_SILENCE)
                                     //->add(test,4)
-                                    ->add(fullTourdion)
+                                    ->add(fullAlto)
                                     ->add(fullCase, 0, NOTE_IS_SILENCE);
+Playable *playVoice2 = (new ListHook(4))->add(fullCase, 0, NOTE_IS_SILENCE)->add(fullCase, 0, NOTE_IS_SILENCE)
+                                    ->add(fullHommes);
+
 int state = 0;//playing
 void loop() {
 // put your main code here, to run repeatedly:
@@ -157,15 +196,13 @@ void loop() {
   if (state == 0) {
     unsigned long currentMillis = millis();
     
-    if (nextPlayedNode <= currentMillis) {
-      if (playMe->hasMore(coordinates, MAX_DEPTH, 0)) {
-        note_info ni = playMe->getOne(coordinates, MAX_DEPTH, 0);
+    if (nextPlayedNote1 <= currentMillis) {
+      if (playVoice1->hasMore(coordinates1, MAX_DEPTH, 0)) {
+        note_info ni = playVoice1->getOne(coordinates1, MAX_DEPTH, 0);
         // main hook is expressed in base note from the scale
         int8_t transpose;
         transpose = 0;
-        Serial.print("flags = ");Serial.println(ni.flags);
 
-       
         if ((ni.flags & NOTE_FORCE_SHARP) && (!isSharp(dummyhmctx.scaleInfo, ni.degreeOffset)))
           ++transpose;
         if ((ni.flags & NOTE_FORCE_FLAT) && (!isFlat(dummyhmctx.scaleInfo, ni.degreeOffset)))
@@ -176,19 +213,46 @@ void loop() {
           if (isSharp(dummyhmctx.scaleInfo, ni.degreeOffset))
             --transpose;
         }
-        Serial.print("transpose = ");Serial.println(transpose);
+        float freq = getFrequency( ni.degreeOffset, 6 + ni.octaveOffset, dummyhmctx.scaleInfo, transpose);
+        uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
+
+        if ((ni.flags & NOTE_IS_SILENCE) == 0)
+          voice1.play(freq, .955*dur);
+      
+        
+        // we take into accound this loop's calculus time
+        nextPlayedNote1 = currentMillis + dur;
+      }else {
+        state = 1;
+        digitalWrite(stateLed,LOW);
+      }
+    }
+    if (nextPlayedNote2 <= currentMillis) {
+      if (playVoice2->hasMore(coordinates2, MAX_DEPTH, 0)) {
+        note_info ni = playVoice2->getOne(coordinates2, MAX_DEPTH, 0);
+        // main hook is expressed in base note from the scale
+        int8_t transpose;
+        transpose = 0;
+
+        if ((ni.flags & NOTE_FORCE_SHARP) && (!isSharp(dummyhmctx.scaleInfo, ni.degreeOffset)))
+          ++transpose;
+        if ((ni.flags & NOTE_FORCE_FLAT) && (!isFlat(dummyhmctx.scaleInfo, ni.degreeOffset)))
+          --transpose;
+        if ((ni.flags & NOTE_FORCE_NATURAL)) {
+          if (isFlat(dummyhmctx.scaleInfo, ni.degreeOffset))
+            ++transpose;
+          if (isSharp(dummyhmctx.scaleInfo, ni.degreeOffset))
+            --transpose;
+        }
         float freq = getFrequency( ni.degreeOffset, 5 + ni.octaveOffset, dummyhmctx.scaleInfo, transpose);
         uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
 
         if ((ni.flags & NOTE_IS_SILENCE) == 0)
-          tone(speaker, freq, .955*dur);
+          voice2.play(freq, .955*dur);
       
         
         // we take into accound this loop's calculus time
-        nextPlayedNode = currentMillis + dur;
-      }else {
-        state = 1;
-        digitalWrite(stateLed,LOW);
+        nextPlayedNote2 = currentMillis + dur;
       }
     }
     if (nextPlayedBeat <= currentMillis) {

@@ -1,6 +1,6 @@
 #ifndef HM_DEFINITONS_HPP
 #define HM_DEFINITONS_HPP
-
+#include <Tone.h>
 /*
    please keep this reference in this file when using this code anywhere
    https://github.com/DelTa-B/hook-matching/
@@ -109,7 +109,7 @@ struct sheet {
 typedef int (*PLAY_CB)(void * context, float freq, uint32_t duration);
 
 struct default_play_context {
-  int pinToPlay;
+  Tone voice;
 };
 int default_play_cb(void * context, float freq, uint32_t duration);
 
