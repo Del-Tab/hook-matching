@@ -1,17 +1,29 @@
 
 #include "hm_music.hpp"
 #include "HookDef.hpp"
+/*
+ * WARNING for this include to work on Arduino Mega 2560 R3, 
+ *   open, from your Arduino install folder,
+ *   the file libraries/Tones/Tone.cpp, and replace every occurence of 
+ *   #if defined(__AVR_ATmega1280__)
+ *   by 
+ *   #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+ *   then compile and send to your arduino :)
+ *   This trick was not tested with more than 3 tone instances 
+ *     and it already breaks PWM.
+ */
 #include <Tone.h>
 #define voicePin1 22  // I'm using digital pin 22 on my mega2560
 #define voicePin2 24
+#define voicePin3 32
 #define stateLed 23 // digital pin 23 will be on on playing state
-#define pulseLed 2  // pwm pin 2 will give the pulse
-Tone voice1,voice2;
+//#define pulseLed 6  // pwm pin 6 would give the pulse if the tone library didn't break it
+Tone voice1,voice2,voice3;
 
 struct scale GAMME_Do = {0, 0, NOTE_DO, "Do majeur"};
 
 // fa est #, note de base = mi
-struct scale miMineur = {B1000,0, NOTE_MI, "mi mineur"};
+struct scale miMineur = {B1000, 0, NOTE_MI, "mi mineur"};
 
 // fa est diese
 struct scale solMajeur = {B1000, 0, NOTE_SOL, "sol majeur"};
@@ -106,14 +118,33 @@ void dummyPlay(int8_t note, Playable *p) {
                                             ->add(hook2_2)
                                             ->add(hook2_1)
                                             ->add(hook2_3);
-  
-  Playable *fullAlto = (new ListHook(3))->add(new RepeatHook(firstPhrase, 2))
-                                             ->add(new RepeatHook(secondPhrase, 2), 4)
-                                             ->add(firstPhrase);
                                              
   Playable *b_Hook1_1 = (new ListHook(2))->add(ronde)
                                          ->add(blanche);
-
+  Playable *c_Hook1_1 = (new ListHook(2))->add(ronde)
+                                         ->add(blanche, -2);
+  Playable *c_Hook1_2 = (new ListHook(2))->add(ronde)
+                                         ->add(blanche,  1);
+  Playable *c_Hook1_3 = (new ListHook(2))->add(ronde)
+                                         ->add(blanche, -1);
+  Playable *c_Hook1_4 = (new ListHook(5))->add(blanche)
+                                        ->add(noire, -1)
+                                        ->add(noire, -2)
+                                        ->add(blanche, -1)
+                                        ->add(rondePointee, -2);
+  Playable *c_Hook2_5 = (new ListHook(3))->add(blanche)->add(ronde, -1)->add(rondePointee, -2);
+  Playable *c_firstPhrase = (new ListHook(7))->add(c_Hook1_1, 2)
+                                            ->add(b_Hook1_1, 4)
+                                            ->add(c_Hook1_2, 4)
+                                            ->add(c_Hook1_3, 4)
+                                            ->add(b_Hook1_1, 4)
+                                            ->add(c_Hook1_2, 2)
+                                            ->add(c_Hook1_4, 2);
+  Playable *c_secondPhrase = (new ListHook(7))->add(b_Hook1_1)
+                                              ->add(new RepeatHook(b_Hook1_1, 2), -1)
+                                              ->add(new RepeatHook(b_Hook1_1, 2), -3)
+                                              ->add(c_Hook1_3, -3)
+                                              ->add(c_Hook2_5, -5);
   Playable *b_Hook1_2 = (new ListHook(5))->add(blanche)
                                          ->add(blanche, 2)
                                          ->add(blanche, 1)
@@ -139,6 +170,19 @@ void dummyPlay(int8_t note, Playable *p) {
                                               ->add(b_Hook1_1)
                                               ->add(b_Hook1_1, 2)
                                               ->add(b_Hook2_1, 2);
+  Playable *shortSoprano = (new ListHook(2))->add(c_firstPhrase, 2)
+                                            ->add(c_secondPhrase, 7);
+  Playable *fullSoprano = (new ListHook(3))->add(new RepeatHook(c_firstPhrase, 2), 2)
+                                            ->add(new RepeatHook(c_secondPhrase, 2), 7)
+                                            ->add(c_firstPhrase, 2);
+                                              
+  Playable *shortAlto = (new ListHook(2))->add(firstPhrase)
+                                         ->add(secondPhrase, 4);
+  Playable *fullAlto = (new ListHook(3))->add(new RepeatHook(firstPhrase, 2))
+                                             ->add(new RepeatHook(secondPhrase, 2), 4)
+                                             ->add(firstPhrase);
+  Playable *shortHommes = (new ListHook(2))->add(b_firstPhrase)
+                                           ->add(b_secondPhrase);
   Playable *fullHommes = (new ListHook(3))->add(new RepeatHook(b_firstPhrase, 2))
                                              ->add(new RepeatHook(b_secondPhrase, 2))
                                              ->add(b_firstPhrase);                                           
@@ -152,10 +196,11 @@ void dummyPlay(int8_t note, Playable *p) {
 void setup() {
   voice1.begin(voicePin1);
   voice2.begin(voicePin2);
+  voice3.begin(voicePin3);
   
   pinMode(voicePin1, OUTPUT);
   pinMode(stateLed, OUTPUT);
-  pinMode(pulseLed, OUTPUT);
+  //pinMode(pulseLed, OUTPUT);
   Serial.begin(9600);
 
   // play some jingle in the set scale
@@ -171,28 +216,40 @@ void setup() {
 }
 uint8_t coordinates1[MAX_DEPTH] = {0};
 uint8_t coordinates2[MAX_DEPTH] = {0};
-uint8_t beatCoordinates[MAX_DEPTH] = {0};
+uint8_t coordinates3[MAX_DEPTH] = {0};
+//uint8_t beatCoordinates[MAX_DEPTH] = {0};
 unsigned long nextPlayedNote1 = 0;
 unsigned long nextPlayedNote2 = 0;
-unsigned long nextPlayedBeat = 0;
+unsigned long nextPlayedNote3 = 0;
+//unsigned long nextPlayedBeat = 0;
 float brightness = 0;
-Playable *playVoice1 = (new ListHook(4))->add(fullCase, 0, NOTE_IS_SILENCE)->add(fullCase, 0, NOTE_IS_SILENCE)
-                                    //->add(test,4)
+Playable *playVoice1 = (new ListHook(6))->add(new RepeatHook(fullCase, 2), 0, NOTE_IS_SILENCE)
+                                    ->add(shortAlto)
+                                    ->add(shortHommes, 0, NOTE_IS_SILENCE)
+                                    ->add(shortSoprano, 0, NOTE_IS_SILENCE)
                                     ->add(fullAlto)
                                     ->add(fullCase, 0, NOTE_IS_SILENCE);
-Playable *playVoice2 = (new ListHook(4))->add(fullCase, 0, NOTE_IS_SILENCE)->add(fullCase, 0, NOTE_IS_SILENCE)
+Playable *playVoice2 = (new ListHook(5))->add(new RepeatHook(fullCase, 2), 0, NOTE_IS_SILENCE )
+                                    ->add(shortAlto, 0, NOTE_IS_SILENCE)
+                                    ->add(shortHommes)
+                                    ->add(shortSoprano, 0, NOTE_IS_SILENCE)
                                     ->add(fullHommes);
-
+Playable *playVoice3 = (new ListHook(5))->add(new RepeatHook(fullCase, 2), 0, NOTE_IS_SILENCE )
+                                    ->add(shortAlto, 0, NOTE_IS_SILENCE)
+                                    ->add(shortHommes, 0, NOTE_IS_SILENCE)
+                                    ->add(shortSoprano)
+                                    ->add(fullSoprano);
+                         
 int state = 0;//playing
 void loop() {
 // put your main code here, to run repeatedly:
   //fade by step
-  if (brightness > 0) {
+  /*if (brightness > 0) {
     brightness -=.025;
     if (brightness < 0)
       brightness = 0;
     analogWrite(pulseLed, brightness);
-  }
+  }*/
   if (state == 0) {
     unsigned long currentMillis = millis();
     
@@ -217,7 +274,7 @@ void loop() {
         uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
 
         if ((ni.flags & NOTE_IS_SILENCE) == 0)
-          voice1.play(freq, .955*dur);
+          voice1.play(round(freq), .955*dur);
       
         
         // we take into accound this loop's calculus time
@@ -248,19 +305,47 @@ void loop() {
         uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
 
         if ((ni.flags & NOTE_IS_SILENCE) == 0)
-          voice2.play(freq, .955*dur);
+          voice2.play(round(freq), .955*dur);
       
         
         // we take into accound this loop's calculus time
         nextPlayedNote2 = currentMillis + dur;
       }
     }
-    if (nextPlayedBeat <= currentMillis) {
+    if (nextPlayedNote3 <= currentMillis) {
+      if (playVoice3->hasMore(coordinates3, MAX_DEPTH, 0)) {
+        note_info ni = playVoice3->getOne(coordinates3, MAX_DEPTH, 0);
+        // main hook is expressed in base note from the scale
+        int8_t transpose;
+        transpose = 0;
+
+        if ((ni.flags & NOTE_FORCE_SHARP) && (!isSharp(dummyhmctx.scaleInfo, ni.degreeOffset)))
+          ++transpose;
+        if ((ni.flags & NOTE_FORCE_FLAT) && (!isFlat(dummyhmctx.scaleInfo, ni.degreeOffset)))
+          --transpose;
+        if ((ni.flags & NOTE_FORCE_NATURAL)) {
+          if (isFlat(dummyhmctx.scaleInfo, ni.degreeOffset))
+            ++transpose;
+          if (isSharp(dummyhmctx.scaleInfo, ni.degreeOffset))
+            --transpose;
+        }
+        float freq = getFrequency( ni.degreeOffset, 5 + ni.octaveOffset, dummyhmctx.scaleInfo, transpose);
+        uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
+
+        if ((ni.flags & NOTE_IS_SILENCE) == 0)
+          voice3.play(round(freq), .955*dur);
+      
+        
+        // we take into accound this loop's calculus time
+        nextPlayedNote3 = currentMillis + dur;
+      }
+    }
+   /* if (nextPlayedBeat <= currentMillis) {
       note_info ni = beat->getOne(beatCoordinates, MAX_DEPTH, 0);
       uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
       brightness = map((uint8_t) ni.degreeOffset, 0, 16, 0, 255);
       analogWrite(pulseLed, brightness);
       nextPlayedBeat = currentMillis + dur;
-    }
+    }*/
   }  
 }
