@@ -252,94 +252,15 @@ void loop() {
   }*/
   if (state == 0) {
     unsigned long currentMillis = millis();
+
+    if (!playVoice1->hasMore(coordinates1, MAX_DEPTH, 0)) {
+      state = 1;
+      digitalWrite(stateLed,LOW);
+    }
+    chechPlayAndUpdateContext(nextPlayedNote3, currentMillis, playVoice3, coordinates3, voice1);
+    chechPlayAndUpdateContext(nextPlayedNote1, currentMillis, playVoice1, coordinates1, voice1);
+    chechPlayAndUpdateContext(nextPlayedNote2, currentMillis, playVoice2, coordinates2, voice2);
     
-    if (nextPlayedNote1 <= currentMillis) {
-      if (playVoice1->hasMore(coordinates1, MAX_DEPTH, 0)) {
-        note_info ni = playVoice1->getOne(coordinates1, MAX_DEPTH, 0);
-        // main hook is expressed in base note from the scale
-        int8_t transpose;
-        transpose = 0;
-
-        if ((ni.flags & NOTE_FORCE_SHARP) && (!isSharp(dummyhmctx.scaleInfo, ni.degreeOffset)))
-          ++transpose;
-        if ((ni.flags & NOTE_FORCE_FLAT) && (!isFlat(dummyhmctx.scaleInfo, ni.degreeOffset)))
-          --transpose;
-        if ((ni.flags & NOTE_FORCE_NATURAL)) {
-          if (isFlat(dummyhmctx.scaleInfo, ni.degreeOffset))
-            ++transpose;
-          if (isSharp(dummyhmctx.scaleInfo, ni.degreeOffset))
-            --transpose;
-        }
-        float freq = getFrequency( ni.degreeOffset, 6 + ni.octaveOffset, dummyhmctx.scaleInfo, transpose);
-        uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
-
-        if ((ni.flags & NOTE_IS_SILENCE) == 0)
-          voice1.play(round(freq), .955*dur);
-      
-        
-        // we take into accound this loop's calculus time
-        nextPlayedNote1 = currentMillis + dur;
-      }else {
-        state = 1;
-        digitalWrite(stateLed,LOW);
-      }
-    }
-    if (nextPlayedNote2 <= currentMillis) {
-      if (playVoice2->hasMore(coordinates2, MAX_DEPTH, 0)) {
-        note_info ni = playVoice2->getOne(coordinates2, MAX_DEPTH, 0);
-        // main hook is expressed in base note from the scale
-        int8_t transpose;
-        transpose = 0;
-
-        if ((ni.flags & NOTE_FORCE_SHARP) && (!isSharp(dummyhmctx.scaleInfo, ni.degreeOffset)))
-          ++transpose;
-        if ((ni.flags & NOTE_FORCE_FLAT) && (!isFlat(dummyhmctx.scaleInfo, ni.degreeOffset)))
-          --transpose;
-        if ((ni.flags & NOTE_FORCE_NATURAL)) {
-          if (isFlat(dummyhmctx.scaleInfo, ni.degreeOffset))
-            ++transpose;
-          if (isSharp(dummyhmctx.scaleInfo, ni.degreeOffset))
-            --transpose;
-        }
-        float freq = getFrequency( ni.degreeOffset, 5 + ni.octaveOffset, dummyhmctx.scaleInfo, transpose);
-        uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
-
-        if ((ni.flags & NOTE_IS_SILENCE) == 0)
-          voice2.play(round(freq), .955*dur);
-      
-        
-        // we take into accound this loop's calculus time
-        nextPlayedNote2 = currentMillis + dur;
-      }
-    }
-    if (nextPlayedNote3 <= currentMillis) {
-      if (playVoice3->hasMore(coordinates3, MAX_DEPTH, 0)) {
-        note_info ni = playVoice3->getOne(coordinates3, MAX_DEPTH, 0);
-        // main hook is expressed in base note from the scale
-        int8_t transpose;
-        transpose = 0;
-
-        if ((ni.flags & NOTE_FORCE_SHARP) && (!isSharp(dummyhmctx.scaleInfo, ni.degreeOffset)))
-          ++transpose;
-        if ((ni.flags & NOTE_FORCE_FLAT) && (!isFlat(dummyhmctx.scaleInfo, ni.degreeOffset)))
-          --transpose;
-        if ((ni.flags & NOTE_FORCE_NATURAL)) {
-          if (isFlat(dummyhmctx.scaleInfo, ni.degreeOffset))
-            ++transpose;
-          if (isSharp(dummyhmctx.scaleInfo, ni.degreeOffset))
-            --transpose;
-        }
-        float freq = getFrequency( ni.degreeOffset, 5 + ni.octaveOffset, dummyhmctx.scaleInfo, transpose);
-        uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
-
-        if ((ni.flags & NOTE_IS_SILENCE) == 0)
-          voice3.play(round(freq), .955*dur);
-      
-        
-        // we take into accound this loop's calculus time
-        nextPlayedNote3 = currentMillis + dur;
-      }
-    }
    /* if (nextPlayedBeat <= currentMillis) {
       note_info ni = beat->getOne(beatCoordinates, MAX_DEPTH, 0);
       uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
@@ -348,4 +269,35 @@ void loop() {
       nextPlayedBeat = currentMillis + dur;
     }*/
   }  
+}
+
+void chechPlayAndUpdateContext(unsigned long &nextTime, unsigned long currentMillis, Playable *voice, uint8_t coordinates[], Tone toneVoice) {
+  if (nextTime <= currentMillis) {
+      if (voice->hasMore(coordinates, MAX_DEPTH, 0)) {
+        note_info ni = voice->getOne(coordinates, MAX_DEPTH, 0);
+        // main hook is expressed in base note from the scale
+        int8_t transpose;
+        transpose = 0;
+
+        if ((ni.flags & NOTE_FORCE_SHARP) && (!isSharp(dummyhmctx.scaleInfo, ni.degreeOffset)))
+          ++transpose;
+        if ((ni.flags & NOTE_FORCE_FLAT) && (!isFlat(dummyhmctx.scaleInfo, ni.degreeOffset)))
+          --transpose;
+        if ((ni.flags & NOTE_FORCE_NATURAL)) {
+          if (isFlat(dummyhmctx.scaleInfo, ni.degreeOffset))
+            ++transpose;
+          if (isSharp(dummyhmctx.scaleInfo, ni.degreeOffset))
+            --transpose;
+        }
+        float freq = getFrequency( ni.degreeOffset, 5 + ni.octaveOffset, dummyhmctx.scaleInfo, transpose);
+        uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
+
+        if ((ni.flags & NOTE_IS_SILENCE) == 0)
+          toneVoice.play(round(freq), .955*dur);
+      
+        
+        // we take into accound this loop's calculus time
+        nextTime = currentMillis + dur;
+      }
+    }
 }
