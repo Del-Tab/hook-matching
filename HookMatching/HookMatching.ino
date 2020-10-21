@@ -257,10 +257,9 @@ void loop() {
       state = 1;
       digitalWrite(stateLed,LOW);
     }
-    chechPlayAndUpdateContext(nextPlayedNote3, currentMillis, playVoice3, coordinates3, voice1);
     chechPlayAndUpdateContext(nextPlayedNote1, currentMillis, playVoice1, coordinates1, voice1);
     chechPlayAndUpdateContext(nextPlayedNote2, currentMillis, playVoice2, coordinates2, voice2);
-    
+    chechPlayAndUpdateContext(nextPlayedNote3, currentMillis, playVoice3, coordinates3, voice3);
    /* if (nextPlayedBeat <= currentMillis) {
       note_info ni = beat->getOne(beatCoordinates, MAX_DEPTH, 0);
       uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
