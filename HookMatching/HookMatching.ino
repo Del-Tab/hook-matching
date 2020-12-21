@@ -20,7 +20,7 @@
 #define HM_PLAY_BEAT
 #ifdef HM_PLAY_BEAT
 # define pulseLed 13  // pwm pin 6 would give the pulse if the tone library didn't break it
-# define HM_PULSE_STEP .05
+# define HM_PULSE_STEP .075
 #endif
 Tone voice1,voice2,voice3;
 
@@ -212,9 +212,9 @@ void setup() {
     if (i == 0)
       oneMeasureBeat->add(beatNote, 16);
     else if (i*2 == tourdion.top)
-      oneMeasureBeat->add(beatNote, 8);
+      oneMeasureBeat->add(beatNote, 6);
     else
-      oneMeasureBeat->add(beatNote, 4);
+      oneMeasureBeat->add(beatNote, 2);
   }
   beat = new RepeatHook(oneMeasureBeat);
 #endif
