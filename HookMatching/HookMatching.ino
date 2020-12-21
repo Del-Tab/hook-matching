@@ -17,7 +17,11 @@
 #define voicePin2 24
 #define voicePin3 32
 #define stateLed 23 // digital pin 23 will be on on playing state
-//#define pulseLed 6  // pwm pin 6 would give the pulse if the tone library didn't break it
+#define HM_PLAY_BEAT
+#ifdef HM_PLAY_BEAT
+# define pulseLed 13  // pwm pin 6 would give the pulse if the tone library didn't break it
+# define HM_PULSE_STEP .05 // .025
+#endif
 Tone voice1,voice2,voice3;
 
 struct scale GAMME_Do = {0, 0, NOTE_DO, "Do majeur"};
@@ -200,7 +204,9 @@ void setup() {
   
   pinMode(voicePin1, OUTPUT);
   pinMode(stateLed, OUTPUT);
-  //pinMode(pulseLed, OUTPUT);
+#ifdef HM_PLAY_BEAT
+  pinMode(pulseLed, OUTPUT);
+#endif
   Serial.begin(9600);
 
   // play some jingle in the set scale
@@ -217,11 +223,13 @@ void setup() {
 uint8_t coordinates1[MAX_DEPTH] = {0};
 uint8_t coordinates2[MAX_DEPTH] = {0};
 uint8_t coordinates3[MAX_DEPTH] = {0};
-//uint8_t beatCoordinates[MAX_DEPTH] = {0};
+#ifdef HM_PLAY_BEAT
+uint8_t beatCoordinates[MAX_DEPTH] = {0};
+#endif
 unsigned long nextPlayedNote1 = 0;
 unsigned long nextPlayedNote2 = 0;
 unsigned long nextPlayedNote3 = 0;
-//unsigned long nextPlayedBeat = 0;
+unsigned long nextPlayedBeat = 0;
 float brightness = 0;
 Playable *playVoice1 = (new ListHook(6))->add(new RepeatHook(fullCase, 2), 0, NOTE_IS_SILENCE)
                                     ->add(shortAlto)
@@ -243,13 +251,15 @@ Playable *playVoice3 = (new ListHook(5))->add(new RepeatHook(fullCase, 2), 0, NO
 int state = 0;//playing
 void loop() {
 // put your main code here, to run repeatedly:
+#ifdef HM_PLAY_BEAT
   //fade by step
-  /*if (brightness > 0) {
-    brightness -=.025;
+  if (brightness > 0) {
+    brightness -= HM_PULSE_STEP;
     if (brightness < 0)
       brightness = 0;
     analogWrite(pulseLed, brightness);
-  }*/
+  }
+#endif
   if (state == 0) {
     unsigned long currentMillis = millis();
 
@@ -260,13 +270,15 @@ void loop() {
     chechPlayAndUpdateContext(nextPlayedNote1, currentMillis, playVoice1, coordinates1, voice1);
     chechPlayAndUpdateContext(nextPlayedNote2, currentMillis, playVoice2, coordinates2, voice2);
     chechPlayAndUpdateContext(nextPlayedNote3, currentMillis, playVoice3, coordinates3, voice3);
-   /* if (nextPlayedBeat <= currentMillis) {
+#ifdef HM_PLAY_BEAT
+    if (nextPlayedBeat <= currentMillis) {
       note_info ni = beat->getOne(beatCoordinates, MAX_DEPTH, 0);
       uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
       brightness = map((uint8_t) ni.degreeOffset, 0, 16, 0, 255);
       analogWrite(pulseLed, brightness);
       nextPlayedBeat = currentMillis + dur;
-    }*/
+    }
+#endif
   }  
 }
 
