@@ -15,12 +15,12 @@
 #include <Tone.h>
 #define voicePin1 22  // I'm using digital pin 22 on my mega2560
 #define voicePin2 24
-#define voicePin3 32
+#define voicePin3 26
 #define stateLed 23 // digital pin 23 will be on on playing state
 #define HM_PLAY_BEAT
 #ifdef HM_PLAY_BEAT
 # define pulseLed 13  // pwm pin 6 would give the pulse if the tone library didn't break it
-# define HM_PULSE_STEP .05 // .025
+# define HM_PULSE_STEP .05
 #endif
 Tone voice1,voice2,voice3;
 
@@ -37,21 +37,23 @@ struct scale miMajeur = {B11011, 0, NOTE_MI, "mi majeur"};
 
 // E minor scale, 120 bpm (unit = halfbeat), 3/2 time signature
 // gamme de mi mineur, 120 bpm (unité de battement = blanche), rythme = 3/2 (3 temps par mesure, unité dde temps = blanche) 
-struct sheet Tourdion = {&miMineur, 120, 48, 3, 2};
+struct sheet tourdion = {&miMineur, 120, 48, 3, 2};
 
-struct hm_ctx dummyhmctx = {&Tourdion, &miMineur};
+struct hm_ctx dummyhmctx = {&tourdion, &miMineur};
 
 
 #define MAX_DEPTH 16
 void dummyPlay(int8_t note, Playable *p) {
   uint8_t coordinates[MAX_DEPTH] = {0};
   while (p->hasMore(coordinates, MAX_DEPTH, 0)) {
-    /*Serial.print("coordinates1 = {");
+#ifdef HM_DEBUG
+    Serial.print("coordinates1 = {");
     for (int i = 0; i < MAX_DEPTH; ++i){
       Serial.print(coordinates1[i]);
       Serial.print(", ");
     }
-    Serial.println("}");*/
+    Serial.println("}");
+#endif
     note_info ni = p->getOne(coordinates, MAX_DEPTH, 0);
     float freq = getFrequency(note - dummyhmctx.scaleInfo->note_base + ni.degreeOffset, 5 + ni.octaveOffset, dummyhmctx.scaleInfo);
     uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
@@ -191,12 +193,9 @@ void dummyPlay(int8_t note, Playable *p) {
                                              ->add(new RepeatHook(b_secondPhrase, 2))
                                              ->add(b_firstPhrase);                                           
                                               
-                                          
-  Playable *beat = new RepeatHook(
-                         (new ListHook(3))->add(blanche, 16)
-                                          ->add(blanche, 4)
-                                          ->add(blanche, 4)
-                                 );
+#ifdef HM_PLAY_BEAT 
+  Playable *beat; // beat is set in setup()
+#endif
 void setup() {
   voice1.begin(voicePin1);
   voice2.begin(voicePin2);
@@ -206,6 +205,18 @@ void setup() {
   pinMode(stateLed, OUTPUT);
 #ifdef HM_PLAY_BEAT
   pinMode(pulseLed, OUTPUT);
+  uint8_t beatNoteDuration =  24 * 4 / tourdion.bottom;
+  Playable *beatNote = new Note(beatNoteDuration);
+  ListHook *oneMeasureBeat =  new ListHook(tourdion.top);
+  for (int i = 0; i <  tourdion.top; ++i) {
+    if (i == 0)
+      oneMeasureBeat->add(beatNote, 16);
+    else if (i*2 == tourdion.top)
+      oneMeasureBeat->add(beatNote, 8);
+    else
+      oneMeasureBeat->add(beatNote, 4);
+  }
+  beat = new RepeatHook(oneMeasureBeat);
 #endif
   Serial.begin(9600);
 
