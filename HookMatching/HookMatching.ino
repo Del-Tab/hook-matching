@@ -210,7 +210,7 @@ void setup() {
   ListHook *oneMeasureBeat =  new ListHook(tourdion.top);
   for (int i = 0; i <  tourdion.top; ++i) {
     if (i == 0)
-      oneMeasureBeat->add(beatNote, 16);
+      oneMeasureBeat->add(beatNote, 15);
     else if (i*2 == tourdion.top)
       oneMeasureBeat->add(beatNote, 6);
     else
@@ -285,7 +285,7 @@ void loop() {
     if (nextPlayedBeat <= currentMillis) {
       note_info ni = beat->getOne(beatCoordinates, MAX_DEPTH, 0);
       uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
-      brightness = map((uint8_t) ni.degreeOffset, 0, 16, 0, 255);
+      brightness = map((uint8_t) ni.degreeOffset, 0, 15, 0, 255);
       analogWrite(pulseLed, brightness);
       nextPlayedBeat = currentMillis + dur;
     }
