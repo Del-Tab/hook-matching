@@ -176,23 +176,14 @@ void dummyPlay(int8_t note, Playable *p) {
                                               ->add(b_Hook1_1)
                                               ->add(b_Hook1_1, 2)
                                               ->add(b_Hook2_1, 2);
-  Playable *shortSoprano = (new ListHook(2))->add(c_firstPhrase, 2)
-                                            ->add(c_secondPhrase, 7);
   Playable *fullSoprano = (new ListHook(3))->add(new RepeatHook(c_firstPhrase, 2), 2)
-                                            ->add(new RepeatHook(c_secondPhrase, 2), 7)
-                                            ->add(c_firstPhrase, 2);
+                                            ->add(new RepeatHook(c_secondPhrase, 2), 7);
                                               
-  Playable *shortAlto = (new ListHook(2))->add(firstPhrase)
-                                         ->add(secondPhrase, 4);
   Playable *fullAlto = (new ListHook(3))->add(new RepeatHook(firstPhrase, 2))
-                                             ->add(new RepeatHook(secondPhrase, 2), 4)
-                                             ->add(firstPhrase);
-  Playable *shortHommes = (new ListHook(2))->add(b_firstPhrase)
-                                           ->add(b_secondPhrase);
+                                             ->add(new RepeatHook(secondPhrase, 2), 4);
   Playable *fullHommes = (new ListHook(3))->add(new RepeatHook(b_firstPhrase, 2))
-                                             ->add(new RepeatHook(b_secondPhrase, 2))
-                                             ->add(b_firstPhrase);                                           
-                                              
+                                             ->add(new RepeatHook(b_secondPhrase, 2));
+
 #ifdef HM_PLAY_BEAT 
   Playable *beat; // beat is set in setup()
 #endif
@@ -243,20 +234,11 @@ unsigned long nextPlayedNote3 = 0;
 unsigned long nextPlayedBeat = 0;
 float brightness = 0;
 Playable *playVoice1 = (new ListHook(6))->add(new RepeatHook(fullCase, 2), 0, NOTE_IS_SILENCE)
-                                    ->add(shortAlto)
-                                    ->add(shortHommes, 0, NOTE_IS_SILENCE)
-                                    ->add(shortSoprano, 0, NOTE_IS_SILENCE)
                                     ->add(fullAlto)
                                     ->add(fullCase, 0, NOTE_IS_SILENCE);
 Playable *playVoice2 = (new ListHook(5))->add(new RepeatHook(fullCase, 2), 0, NOTE_IS_SILENCE )
-                                    ->add(shortAlto, 0, NOTE_IS_SILENCE)
-                                    ->add(shortHommes)
-                                    ->add(shortSoprano, 0, NOTE_IS_SILENCE)
                                     ->add(fullHommes);
 Playable *playVoice3 = (new ListHook(5))->add(new RepeatHook(fullCase, 2), 0, NOTE_IS_SILENCE )
-                                    ->add(shortAlto, 0, NOTE_IS_SILENCE)
-                                    ->add(shortHommes, 0, NOTE_IS_SILENCE)
-                                    ->add(shortSoprano)
                                     ->add(fullSoprano);
                          
 int state = 0;//playing
