@@ -19,7 +19,7 @@
 #define stateLed 23 // digital pin 23 will be on on playing state
 #define HM_PLAY_BEAT
 #ifdef HM_PLAY_BEAT
-# define pulseLed 13  // pwm pin 6 would give the pulse if the tone library didn't break it
+# define pulseLed 13  // pwm pin 13 would give the pulse if the tone library didn't break it
 # define HM_PULSE_STEP .075
 #endif
 Tone voice1,voice2,voice3;
@@ -176,9 +176,9 @@ void dummyPlay(int8_t note, Playable *p) {
                                               ->add(b_Hook1_1)
                                               ->add(b_Hook1_1, 2)
                                               ->add(b_Hook2_1, 2);
+
   Playable *fullSoprano = (new ListHook(3))->add(new RepeatHook(c_firstPhrase, 2), 2)
                                             ->add(new RepeatHook(c_secondPhrase, 2), 7);
-                                              
   Playable *fullAlto = (new ListHook(3))->add(new RepeatHook(firstPhrase, 2))
                                              ->add(new RepeatHook(secondPhrase, 2), 4);
   Playable *fullHommes = (new ListHook(3))->add(new RepeatHook(b_firstPhrase, 2))
