@@ -39,27 +39,20 @@ struct scale miMajeur = {B11011, 0, NOTE_MI, "mi majeur"};
 // gamme de mi mineur, 120 bpm (unité de battement = blanche), rythme = 3/2 (3 temps par mesure, unité dde temps = blanche) 
 struct sheet tourdion = {&miMineur, 120, 48, 3, 2};
 
-struct hm_ctx dummyhmctx = {&tourdion, &miMineur};
+PlayingContext * pc = new PlayingContext(&tourdion, &miMineur);
 
 
 #define MAX_DEPTH 16
-void dummyPlay(int8_t note, Playable *p) {
+void dummyPlay(Playable *p) {
   uint8_t coordinates[MAX_DEPTH] = {0};
+  unsigned long nextTime = 0;
   while (p->hasMore(coordinates, MAX_DEPTH, 0)) {
-#ifdef HM_DEBUG
-    Serial.print("coordinates1 = {");
-    for (int i = 0; i < MAX_DEPTH; ++i){
-      Serial.print(coordinates1[i]);
-      Serial.print(", ");
+
+    if (nextTime <= millis()) {
+      note_info ni = p->getOne(coordinates, MAX_DEPTH, 0);
+      pc->play(nextTime, voice1, ni, millis());
     }
-    Serial.println("}");
-#endif
-    note_info ni = p->getOne(coordinates, MAX_DEPTH, 0);
-    float freq = getFrequency(note - dummyhmctx.scaleInfo->note_base + ni.degreeOffset, 5 + ni.octaveOffset, dummyhmctx.scaleInfo);
-    uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
-     
-    voice1.play(freq, .955*dur);
-    delay(dur);
+
   }
 }
 
@@ -70,7 +63,7 @@ void dummyPlay(int8_t note, Playable *p) {
   Playable *blanchePointee = new Note(72);      //dottedHalf
   Playable *ronde = new Note(96);               //full
   Playable *rondePointee = new Note(144);       //dottedFull
-  Playable *fullCase = new Note(dummyhmctx.sheetInfo->top * dummyhmctx.sheetInfo->bottom * 24);
+  Playable *fullCase = new Note(tourdion.top * tourdion.bottom * 24);
   Playable *hook1_1 = (new ListHook(6))->add(noire)
                                      ->add(noire, 1)
                                      ->add(noire, 2)
@@ -213,11 +206,11 @@ void setup() {
 
   // play some jingle in the set scale
   ListHook *suite = new ListHook(6);
-  suite->add(blanche);
+  suite->add(blanche, -2);
   for (int i = 1; i <  5; ++i)
-    suite->add(croche, i);
-  suite->add(blanche,  5 );
-  dummyPlay(NOTE_DO, suite);
+    suite->add(croche, i - 2);
+  suite->add(blanche,  3 );
+  dummyPlay(suite);
 
   delay(2000);
   digitalWrite(stateLed, HIGH);
@@ -266,7 +259,7 @@ void loop() {
 #ifdef HM_PLAY_BEAT
     if (nextPlayedBeat <= currentMillis) {
       note_info ni = beat->getOne(beatCoordinates, MAX_DEPTH, 0);
-      uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
+      uint32_t dur = getNoteLengthMillis(ni.duration, tourdion);
       brightness = map((uint8_t) ni.degreeOffset, 0, 15, 0, 255);
       analogWrite(pulseLed, brightness);
       nextPlayedBeat = currentMillis + dur;
@@ -279,29 +272,7 @@ void chechPlayAndUpdateContext(unsigned long &nextTime, unsigned long currentMil
   if (nextTime <= currentMillis) {
       if (voice->hasMore(coordinates, MAX_DEPTH, 0)) {
         note_info ni = voice->getOne(coordinates, MAX_DEPTH, 0);
-        // main hook is expressed in base note from the scale
-        int8_t transpose;
-        transpose = 0;
-
-        if ((ni.flags & NOTE_FORCE_SHARP) && (!isSharp(dummyhmctx.scaleInfo, ni.degreeOffset)))
-          ++transpose;
-        if ((ni.flags & NOTE_FORCE_FLAT) && (!isFlat(dummyhmctx.scaleInfo, ni.degreeOffset)))
-          --transpose;
-        if ((ni.flags & NOTE_FORCE_NATURAL)) {
-          if (isFlat(dummyhmctx.scaleInfo, ni.degreeOffset))
-            ++transpose;
-          if (isSharp(dummyhmctx.scaleInfo, ni.degreeOffset))
-            --transpose;
-        }
-        float freq = getFrequency( ni.degreeOffset, 5 + ni.octaveOffset, dummyhmctx.scaleInfo, transpose);
-        uint32_t dur = getNoteLengthMillis(ni.duration, *dummyhmctx.sheetInfo);
-
-        if ((ni.flags & NOTE_IS_SILENCE) == 0)
-          toneVoice.play(round(freq), .955*dur);
-      
-        
-        // we take into accound this loop's calculus time
-        nextTime = currentMillis + dur;
+        pc->play(nextTime, toneVoice, ni, currentMillis);
       }
     }
 }

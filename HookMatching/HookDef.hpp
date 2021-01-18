@@ -1,11 +1,7 @@
 
 #include <Arduino.h>
 #include "hm_definitions.hpp"
-
-struct hm_ctx {
-  struct sheet *sheetInfo;
-  struct scale *scaleInfo;
-};
+#include "hm_music.hpp"
 
 
 struct note_info{
@@ -14,6 +10,49 @@ struct note_info{
   note_duration duration;
   effects flags;
 };
+
+class PlayingContext {
+  private:
+    struct sheet *sheetInfo;
+    struct scale *scaleInfo;
+  public:
+    PlayingContext() : PlayingContext(NULL,NULL) {};
+    PlayingContext(struct sheet *_sheetInfo, struct scale *_scaleInfo) : sheetInfo(_sheetInfo), scaleInfo(_scaleInfo) { };
+    float get_frequency(struct note_info ni) {
+      int8_t transpose;
+      transpose = 0;
+
+      if ((ni.flags & NOTE_FORCE_SHARP) && (!isSharp(scaleInfo, ni.degreeOffset)))
+        ++transpose;
+      if ((ni.flags & NOTE_FORCE_FLAT) && (!isFlat(scaleInfo, ni.degreeOffset)))
+        --transpose;
+      if ((ni.flags & NOTE_FORCE_NATURAL)) {
+        if (isFlat(scaleInfo, ni.degreeOffset))
+          ++transpose;
+        if (isSharp(scaleInfo, ni.degreeOffset))
+          --transpose;
+      }
+      return getFrequency( ni.degreeOffset, 5 + ni.octaveOffset, scaleInfo, transpose);
+    };
+    
+    uint32_t getDurationMillis(struct note_info ni) {
+      return getNoteLengthMillis(ni.duration, *sheetInfo);
+    };
+    // TODO: put it in a player class
+    void play(unsigned long &nextTime, Tone toneVoice, note_info ni, unsigned long currentMillis){
+      float freq = this->get_frequency(ni);
+      uint32_t dur = this->getDurationMillis(ni);
+
+      if ((ni.flags & NOTE_IS_SILENCE) == 0)
+        toneVoice.play(round(freq), .955*dur);
+    
+      
+      // we take into accound this loop's calculus time
+      nextTime = currentMillis + dur;
+    };
+};
+
+
 
 class Playable {
   private:
