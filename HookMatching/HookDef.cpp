@@ -52,7 +52,7 @@ uint8_t RepeatHook::getMaxDepth() {
 // List Hook            //
 //////////////////////////
 ListHook::ListHook(uint16_t _capacity) : capacity(_capacity), number(0), maxDepth(0) {
-  list = malloc(_capacity * sizeof(struct PlayableChild));
+  list = (struct PlayableChild *)malloc(_capacity * sizeof(struct PlayableChild));
   if (list == NULL)
     Serial.println("malloc error");
 }

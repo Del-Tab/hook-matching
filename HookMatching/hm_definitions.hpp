@@ -59,7 +59,7 @@ struct scale {
   uint8_t sharps;        // binary map from right to left, starting from do: 1 if sharp
   uint8_t flats;         // binary map from right to left, starting from do: 1 if flat
   note note_base;        // the NOTE_something telling which note is the Tonic
-  char *display_name;    // a fancy name to display
+  const char *display_name;    // a fancy name to display
 };
 
 typedef struct hook2 *hook2_p;
