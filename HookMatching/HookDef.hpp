@@ -4,7 +4,7 @@
 #include "hm_music.hpp"
 
 
-struct note_info{
+struct note_info {
   int8_t degreeOffset;
   uint8_t octaveOffset;
   note_duration duration;
@@ -57,21 +57,26 @@ class PlayingContext {
 class Playable {
   private:
     int nb_usage;
-  public: 
+  public:
     //virtual int getIteratorInitCtx() = 0;
     virtual boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth) = 0;
     virtual struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth)  = 0;
     virtual uint8_t getMaxDepth() = 0;
-    
+
     // linked to the memory usage:
     Playable(): nb_usage(1) {}; // we suppose it's used once when allocated . call unuse to free
-    Playable *useAgain() {++nb_usage; return this;};
-    void unuse() {if(--nb_usage == 0) delete this; };
+    Playable *useAgain() {
+      ++nb_usage;
+      return this;
+    };
+    void unuse() {
+      if (--nb_usage == 0) delete this;
+    };
 };
 
 /**
- * The simplest Playable: one single playable stuff that defines a duration, callable with offset and octave
- */
+   The simplest Playable: one single playable stuff that defines a duration, callable with offset and octave
+*/
 class Note : public Playable {
   private:
     note_duration duration;
@@ -80,12 +85,12 @@ class Note : public Playable {
     Note(note_duration _duration): duration(_duration) { };
     boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
     struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
-    uint8_t Note::getMaxDepth();
+    uint8_t getMaxDepth();
 };
 
 /**
- * A hook that repeats the inner Hook N times, or every time if N is 0
- */
+   A hook that repeats the inner Hook N times, or every time if N is 0
+*/
 class RepeatHook : public Playable {
   private:
     Playable *p;
@@ -101,8 +106,8 @@ class RepeatHook : public Playable {
 };
 
 /**
- * A hook that is a list of PlayableChild_s with no relation whatsoever.They are played one after the other
- */
+   A hook that is a list of PlayableChild_s with no relation whatsoever.They are played one after the other
+*/
 class ListHook : public Playable {
   private:
     struct PlayableChild {
@@ -116,10 +121,14 @@ class ListHook : public Playable {
     struct PlayableChild *list;
     ~ListHook();
   public:
-    ListHook(uint16_t _capacity); 
+    ListHook(uint16_t _capacity);
 
-    ListHook *add(Playable *p) {return add(p, 0, 0); };
-    ListHook *add(Playable *p, int8_t degreeOffset) {return add(p, degreeOffset, 0); };
+    ListHook *add(Playable *p) {
+      return add(p, 0, 0);
+    };
+    ListHook *add(Playable *p, int8_t degreeOffset) {
+      return add(p, degreeOffset, 0);
+    };
     ListHook *add(Playable *p, int8_t degreeOffset, effects flags);
     boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
     struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
