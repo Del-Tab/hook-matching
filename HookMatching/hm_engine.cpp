@@ -26,7 +26,7 @@ int hm_div(int a, int b)
 
 int default_play_cb(void * context, float freq, uint32_t duration)
 {
-  struct default_play_context* ctx = context;
+  struct default_play_context* ctx = (struct default_play_context*)context;
   ctx->voice.play(round(freq), duration - 20);
   delay(duration);  
   return 0;
