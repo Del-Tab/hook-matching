@@ -41,7 +41,7 @@ class PlayingContext {
         if (isSharp(scaleInfo, ni.degreeOffset))
           --transpose;
       }
-      return getFrequency( ni.degreeOffset, 5 + ni.octaveOffset, scaleInfo, transpose);
+      return getFrequency(ni.degreeOffset, 5 + ni.octaveOffset, scaleInfo, transpose);
     };
     
     uint32_t getDurationMillis(struct note_info ni) {

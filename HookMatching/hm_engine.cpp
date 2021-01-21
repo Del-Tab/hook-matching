@@ -24,26 +24,6 @@ int hm_div(int a, int b)
   return (int)ret;
 }
 
-int default_play_cb(void * context, float freq, uint32_t duration)
-{
-  struct default_play_context* ctx = (struct default_play_context*)context;
-  ctx->voice.play(round(freq), duration - 20);
-  delay(duration);  
-  return 0;
-}
-
-void walk (PLAY_CB play_cb, void *context, const struct contextual_scale_hook & partie, const struct sheet & p, const struct scale *g) {
-  for (int i = 0; i < partie.hook->number; ++i) {
-    float freq = getFrequency(partie.note - g->note_base + partie.hook->part[i].degreeOffset, partie.octave, g);
-    uint32_t dur = getNoteLengthMillis(partie.hook->part[i].duration, p);
-    play_cb(context, freq, dur);
-  }
-}
-
-void walk (PLAY_CB play_cb, void *context, const struct contextual_scale_hook & partie, const struct sheet & p) {
-  walk (play_cb, context, partie, p, p.scale);
-}
-
 float getFrequency(const int8_t degree, const uint8_t octave, struct scale const *g, const int8_t transpose) {
   // Getting base do (C) from current octave ... 
   int16_t offsetFromLa440 = getMidiNote(degree, octave, g) + transpose;

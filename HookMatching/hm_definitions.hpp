@@ -52,7 +52,7 @@ extern float LA4_REF;
 typedef uint8_t note_duration;  // 24 for a black, 48 for a white, handles triolets
 typedef uint8_t note;           // 0 for C, 1 for D, etc.
 
-/** scale is a description of the rule on which the note walk.
+/** scale is a description of the rule on which the note walks.
    Definition is made taking the C major scale as reference, which is what you get by only playing white notes on a piano
 */
 
@@ -109,9 +109,5 @@ struct sheet {
 
 typedef int (*PLAY_CB)(void * context, float freq, uint32_t duration);
 
-struct default_play_context {
-  Tone voice;
-};
-int default_play_cb(void * context, float freq, uint32_t duration);
 
 #endif
