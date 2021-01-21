@@ -24,6 +24,7 @@
 #endif
 Tone voice1,voice2,voice3;
 
+
 struct scale GAMME_Do = {0, 0, NOTE_DO, "Do majeur"};
 
 // fa est #, note de base = mi
@@ -41,6 +42,9 @@ struct sheet tourdion = {&miMineur, 120, 48, 3, 2};
 
 PlayingContext * pc = new PlayingContext(&tourdion, &miMineur);
 
+Player *p1 = new TonePlayer(pc, THE_NOTHING, &voice1);
+Player *p2 = new TonePlayer(pc, THE_NOTHING, &voice2);
+Player *p3 = new TonePlayer(pc, THE_NOTHING, &voice3);
 
 #define MAX_DEPTH 16
 void dummyPlay(Playable *p) {
@@ -48,9 +52,9 @@ void dummyPlay(Playable *p) {
   unsigned long nextTime = 0;
   while (p->hasMore(coordinates, MAX_DEPTH, 0)) {
 
-    if (nextTime <= millis()) {
+    if (p1->isReady( millis())) {
       note_info ni = p->getOne(coordinates, MAX_DEPTH, 0);
-      pc->play(nextTime, voice1, ni, millis());
+      p1->play(ni, millis());
     }
 
   }
@@ -253,9 +257,11 @@ void loop() {
       state = 1;
       digitalWrite(stateLed,LOW);
     }
-    chechPlayAndUpdateContext(nextPlayedNote1, currentMillis, playVoice1, coordinates1, voice1);
-    chechPlayAndUpdateContext(nextPlayedNote2, currentMillis, playVoice2, coordinates2, voice2);
-    chechPlayAndUpdateContext(nextPlayedNote3, currentMillis, playVoice3, coordinates3, voice3);
+    //TODO put coordinate in the player with a reset 
+    //p1->playIfReady(currentMillis, coordinates1);
+    chechPlayAndUpdateContext(p1, currentMillis, playVoice1, coordinates1);
+    chechPlayAndUpdateContext(p2, currentMillis, playVoice2, coordinates2);
+    chechPlayAndUpdateContext(p3, currentMillis, playVoice3, coordinates3);
 #ifdef HM_PLAY_BEAT
     if (nextPlayedBeat <= currentMillis) {
       note_info ni = beat->getOne(beatCoordinates, MAX_DEPTH, 0);
@@ -268,11 +274,11 @@ void loop() {
   }  
 }
 
-void chechPlayAndUpdateContext(unsigned long &nextTime, unsigned long currentMillis, Playable *voice, uint8_t coordinates[], Tone toneVoice) {
-  if (nextTime <= currentMillis) {
+void chechPlayAndUpdateContext(Player *p, unsigned long currentMillis, Playable *voice, uint8_t coordinates[]) {
+  if (p->isReady( currentMillis)) {
       if (voice->hasMore(coordinates, MAX_DEPTH, 0)) {
         note_info ni = voice->getOne(coordinates, MAX_DEPTH, 0);
-        pc->play(nextTime, toneVoice, ni, currentMillis);
+        p->play(ni, currentMillis);
       }
     }
 }
