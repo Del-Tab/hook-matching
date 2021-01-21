@@ -1,10 +1,14 @@
-
+#ifndef HOOKDEF_HPP
+#define HOOKDEF_HPP
 #include <Arduino.h>
 #include "hm_definitions.hpp"
 #include "hm_music.hpp"
 
 #ifndef MAX_DEPTH
 # define MAX_DEPTH 16
+#endif
+#ifndef HM_PULSE_STEP
+# define HM_PULSE_STEP .075
 #endif
 
 struct note_info {
@@ -22,6 +26,7 @@ class PlayingContext {
   public:
     PlayingContext() : PlayingContext(NULL, NULL) {};
     PlayingContext(struct sheet *_sheetInfo, struct scale *_scaleInfo) : sheetInfo(_sheetInfo), scaleInfo(_scaleInfo) { };
+    struct sheet *getSheetInfo() {return sheetInfo;}
     float get_frequency(struct note_info ni) {
       int8_t transpose;
       transpose = 0;
@@ -75,7 +80,7 @@ class Player {
       return nextTime <= millis;
      }
    public:
-     Player(PlayingContext *_pc, Playable *_voice) : pc(_pc), voice(_voice->useAgain()), coordinates({0}), nextTime(0) { }
+     Player(PlayingContext *_pc, Playable *_voice) : pc(_pc), voice(_voice->useAgain()), coordinates{0}, nextTime(0) { }
      boolean hasFinished() {return !voice->hasMore(coordinates, MAX_DEPTH, 0);}
      void setVoice(Playable *_voice) {
       if (voice != NULL)
@@ -112,8 +117,11 @@ class TonePlayer : public Player {
 
 };
 
+
+
+
 /**
- * the null playable, play nothing at all (used when a voice is not initialized)
+ * the null playable, play nothing at all (used when a voice is not initialized and you want to call methods without crashing)
  */
 class Nothing : public Playable {
   public:
@@ -124,6 +132,7 @@ class Nothing : public Playable {
 };
 
  static Playable *THE_NOTHING = new Nothing();
+
 
 
 /**
@@ -139,6 +148,8 @@ class Note : public Playable {
     struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
     uint8_t getMaxDepth();
 };
+
+
 
 /**
    A hook that repeats the inner Hook N times, or every time if N is 0
@@ -186,3 +197,44 @@ class ListHook : public Playable {
     struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
     uint8_t getMaxDepth();
 };
+
+
+class LedMetronome : public Player {
+  private:
+    unsigned int pulseLed;
+    int brightness;
+  public:
+    LedMetronome(PlayingContext *_pc, unsigned int _pulseLed) : Player(_pc, THE_NOTHING), pulseLed(_pulseLed), brightness(0) {
+      pinMode(pulseLed, OUTPUT);
+      uint8_t beatNoteDuration =  24 * 4 / pc->getSheetInfo()->bottom;
+      Playable *beatNote = new Note(beatNoteDuration);
+      ListHook *oneMeasureBeat =  new ListHook(pc->getSheetInfo()->top);
+      for (int i = 0; i <  pc->getSheetInfo()->top; ++i) {
+        if (i == 0)
+          oneMeasureBeat->add(beatNote, 15);
+        else if (i*2 == pc->getSheetInfo()->top)
+          oneMeasureBeat->add(beatNote, 6);
+        else
+          oneMeasureBeat->add(beatNote, 2);
+      }
+      setVoice(new RepeatHook(oneMeasureBeat));
+      oneMeasureBeat->unuse();
+    }
+    void playIfReady(unsigned long currentMillis) {
+      // fade by step
+      if (brightness > 0) {
+        brightness -= HM_PULSE_STEP;
+        if (brightness < 0)
+          brightness = 0;
+        analogWrite(pulseLed, brightness);
+      }
+      if (this->isReady(currentMillis)) {
+        note_info ni = voice->getOne(coordinates, MAX_DEPTH, 0);
+        uint32_t dur = pc->getDurationMillis(ni);
+        brightness = map((uint8_t) ni.degreeOffset, 0, 15, 0, 255);
+        analogWrite(pulseLed, brightness);
+        nextTime = currentMillis + dur;
+      }
+    }
+};
+#endif

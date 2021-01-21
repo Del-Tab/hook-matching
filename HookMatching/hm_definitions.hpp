@@ -47,7 +47,8 @@
 #define FORCE_FLAT 2
 #define FORCE_NATURAL 4
 
-static float LA4_REF = 440.0;
+extern float LA4_REF;
+
 typedef uint8_t note_duration;  // 24 for a black, 48 for a white, handles triolets
 typedef uint8_t note;           // 0 for C, 1 for D, etc.
 

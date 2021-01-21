@@ -1,6 +1,7 @@
 
 #include "hm_music.hpp"
 #include "HookDef.hpp"
+#include <avr/sleep.h>
 /*
  * WARNING for this include to work on Arduino Mega 2560 R3, 
  *   open, from your Arduino install folder,
@@ -20,10 +21,9 @@
 #define HM_PLAY_BEAT
 #ifdef HM_PLAY_BEAT
 # define pulseLed 13  // pwm pin 13 would give the pulse if the tone library didn't break it
-# define HM_PULSE_STEP .075
 #endif
 Tone voice1,voice2,voice3;
-
+float LA4_REF = 440.0;
 
 struct scale GAMME_Do = {0, 0, NOTE_DO, "Do majeur"};
 
@@ -45,7 +45,9 @@ PlayingContext * pc = new PlayingContext(&tourdion, &miMineur);
 Player *p1 = new TonePlayer(pc, THE_NOTHING, &voice1);
 Player *p2 = new TonePlayer(pc, THE_NOTHING, &voice2);
 Player *p3 = new TonePlayer(pc, THE_NOTHING, &voice3);
-
+#ifdef HM_PLAY_BEAT
+Player *metronome = new LedMetronome(pc, pulseLed);
+#endif
 
 void dummyPlay(Playable *p) {
   p1->setVoice(p);
@@ -179,12 +181,8 @@ void dummyPlay(Playable *p) {
   Playable *beat; // beat is set in setup()
 #endif
 
-#ifdef HM_PLAY_BEAT
-uint8_t beatCoordinates[MAX_DEPTH] = {0};
-#endif
-
-unsigned long nextPlayedBeat = 0;
-float brightness = 0;
+//unsigned long nextPlayedBeat = 0;
+//float brightness = 0;
 Playable *tourdionVoice1 = (new ListHook(6))->add(new RepeatHook(fullCase, 2), 0, NOTE_IS_SILENCE)
                                     ->add(fullAlto)
                                     ->add(fullCase, 0, NOTE_IS_SILENCE);
@@ -193,27 +191,15 @@ Playable *tourdionVoice2 = (new ListHook(5))->add(new RepeatHook(fullCase, 2), 0
 Playable *tourdionVoice3 = (new ListHook(5))->add(new RepeatHook(fullCase, 2), 0, NOTE_IS_SILENCE )
                                     ->add(fullSoprano);
 void setup() {
+  
+  
   voice1.begin(voicePin1);
   voice2.begin(voicePin2);
   voice3.begin(voicePin3);
   
   pinMode(voicePin1, OUTPUT);
   pinMode(stateLed, OUTPUT);
-#ifdef HM_PLAY_BEAT
-  pinMode(pulseLed, OUTPUT);
-  uint8_t beatNoteDuration =  24 * 4 / tourdion.bottom;
-  Playable *beatNote = new Note(beatNoteDuration);
-  ListHook *oneMeasureBeat =  new ListHook(tourdion.top);
-  for (int i = 0; i <  tourdion.top; ++i) {
-    if (i == 0)
-      oneMeasureBeat->add(beatNote, 15);
-    else if (i*2 == tourdion.top)
-      oneMeasureBeat->add(beatNote, 6);
-    else
-      oneMeasureBeat->add(beatNote, 2);
-  }
-  beat = new RepeatHook(oneMeasureBeat);
-#endif
+
   Serial.begin(9600);
 
   // play some jingle in the set scale
@@ -221,9 +207,9 @@ void setup() {
   suite->add(blanche, -2);
   for (int i = 1; i <  5; ++i)
     suite->add(croche, i - 2);
-  suite->add(blanche,  3 );
+  suite->add(blanche, 3);
   dummyPlay(suite);
-
+  LA4_REF = 220.0;
   delay(2000);
   digitalWrite(stateLed, HIGH);
   p1->setVoice(tourdionVoice1);
@@ -233,34 +219,26 @@ void setup() {
 int state = 0; // playing
 void loop() {
 // put your main code here, to run repeatedly:
-#ifdef HM_PLAY_BEAT
-  //fade by step
-  if (brightness > 0) {
-    brightness -= HM_PULSE_STEP;
-    if (brightness < 0)
-      brightness = 0;
-    analogWrite(pulseLed, brightness);
-  }
-#endif
+
   if (state == 0) {
     unsigned long currentMillis = millis();
 
     if (p1->hasFinished()) {
       state = 1;
       digitalWrite(stateLed,LOW);
+#ifdef HM_PLAY_BEAT
+      digitalWrite(pulseLed,LOW);
+#endif
+      set_sleep_mode (SLEEP_MODE_PWR_DOWN);  
+      sleep_enable();
+      sleep_cpu();
     }
     p1->playIfReady(currentMillis);
     p2->playIfReady(currentMillis);
     p2->playIfReady(currentMillis);
     
 #ifdef HM_PLAY_BEAT
-    if (nextPlayedBeat <= currentMillis) {
-      note_info ni = beat->getOne(beatCoordinates, MAX_DEPTH, 0);
-      uint32_t dur = getNoteLengthMillis(ni.duration, tourdion);
-      brightness = map((uint8_t) ni.degreeOffset, 0, 15, 0, 255);
-      analogWrite(pulseLed, brightness);
-      nextPlayedBeat = currentMillis + dur;
-    }
+    metronome->playIfReady(currentMillis);
 #endif
   }  
 }
