@@ -46,17 +46,11 @@ Player *p1 = new TonePlayer(pc, THE_NOTHING, &voice1);
 Player *p2 = new TonePlayer(pc, THE_NOTHING, &voice2);
 Player *p3 = new TonePlayer(pc, THE_NOTHING, &voice3);
 
-#define MAX_DEPTH 16
+
 void dummyPlay(Playable *p) {
-  uint8_t coordinates[MAX_DEPTH] = {0};
-  unsigned long nextTime = 0;
-  while (p->hasMore(coordinates, MAX_DEPTH, 0)) {
-
-    if (p1->isReady( millis())) {
-      note_info ni = p->getOne(coordinates, MAX_DEPTH, 0);
-      p1->play(ni, millis());
-    }
-
+  p1->setVoice(p);
+  while (!p1->hasFinished()) {
+    p1->playIfReady(millis());
   }
 }
 
@@ -184,6 +178,20 @@ void dummyPlay(Playable *p) {
 #ifdef HM_PLAY_BEAT 
   Playable *beat; // beat is set in setup()
 #endif
+
+#ifdef HM_PLAY_BEAT
+uint8_t beatCoordinates[MAX_DEPTH] = {0};
+#endif
+
+unsigned long nextPlayedBeat = 0;
+float brightness = 0;
+Playable *tourdionVoice1 = (new ListHook(6))->add(new RepeatHook(fullCase, 2), 0, NOTE_IS_SILENCE)
+                                    ->add(fullAlto)
+                                    ->add(fullCase, 0, NOTE_IS_SILENCE);
+Playable *tourdionVoice2 = (new ListHook(5))->add(new RepeatHook(fullCase, 2), 0, NOTE_IS_SILENCE )
+                                    ->add(fullHommes);
+Playable *tourdionVoice3 = (new ListHook(5))->add(new RepeatHook(fullCase, 2), 0, NOTE_IS_SILENCE )
+                                    ->add(fullSoprano);
 void setup() {
   voice1.begin(voicePin1);
   voice2.begin(voicePin2);
@@ -218,27 +226,11 @@ void setup() {
 
   delay(2000);
   digitalWrite(stateLed, HIGH);
+  p1->setVoice(tourdionVoice1);
+  p2->setVoice(tourdionVoice2);
+  p3->setVoice(tourdionVoice3);
 }
-uint8_t coordinates1[MAX_DEPTH] = {0};
-uint8_t coordinates2[MAX_DEPTH] = {0};
-uint8_t coordinates3[MAX_DEPTH] = {0};
-#ifdef HM_PLAY_BEAT
-uint8_t beatCoordinates[MAX_DEPTH] = {0};
-#endif
-unsigned long nextPlayedNote1 = 0;
-unsigned long nextPlayedNote2 = 0;
-unsigned long nextPlayedNote3 = 0;
-unsigned long nextPlayedBeat = 0;
-float brightness = 0;
-Playable *playVoice1 = (new ListHook(6))->add(new RepeatHook(fullCase, 2), 0, NOTE_IS_SILENCE)
-                                    ->add(fullAlto)
-                                    ->add(fullCase, 0, NOTE_IS_SILENCE);
-Playable *playVoice2 = (new ListHook(5))->add(new RepeatHook(fullCase, 2), 0, NOTE_IS_SILENCE )
-                                    ->add(fullHommes);
-Playable *playVoice3 = (new ListHook(5))->add(new RepeatHook(fullCase, 2), 0, NOTE_IS_SILENCE )
-                                    ->add(fullSoprano);
-                         
-int state = 0;//playing
+int state = 0; // playing
 void loop() {
 // put your main code here, to run repeatedly:
 #ifdef HM_PLAY_BEAT
@@ -253,15 +245,14 @@ void loop() {
   if (state == 0) {
     unsigned long currentMillis = millis();
 
-    if (!playVoice1->hasMore(coordinates1, MAX_DEPTH, 0)) {
+    if (p1->hasFinished()) {
       state = 1;
       digitalWrite(stateLed,LOW);
     }
-    //TODO put coordinate in the player with a reset 
-    //p1->playIfReady(currentMillis, coordinates1);
-    chechPlayAndUpdateContext(p1, currentMillis, playVoice1, coordinates1);
-    chechPlayAndUpdateContext(p2, currentMillis, playVoice2, coordinates2);
-    chechPlayAndUpdateContext(p3, currentMillis, playVoice3, coordinates3);
+    p1->playIfReady(currentMillis);
+    p2->playIfReady(currentMillis);
+    p2->playIfReady(currentMillis);
+    
 #ifdef HM_PLAY_BEAT
     if (nextPlayedBeat <= currentMillis) {
       note_info ni = beat->getOne(beatCoordinates, MAX_DEPTH, 0);
@@ -272,13 +263,4 @@ void loop() {
     }
 #endif
   }  
-}
-
-void chechPlayAndUpdateContext(Player *p, unsigned long currentMillis, Playable *voice, uint8_t coordinates[]) {
-  if (p->isReady( currentMillis)) {
-      if (voice->hasMore(coordinates, MAX_DEPTH, 0)) {
-        note_info ni = voice->getOne(coordinates, MAX_DEPTH, 0);
-        p->play(ni, currentMillis);
-      }
-    }
 }
