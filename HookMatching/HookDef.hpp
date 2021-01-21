@@ -3,6 +3,9 @@
 #include "hm_definitions.hpp"
 #include "hm_music.hpp"
 
+#ifndef MAX_DEPTH
+# define MAX_DEPTH 16
+#endif
 
 struct note_info {
   int8_t degreeOffset;
@@ -11,12 +14,13 @@ struct note_info {
   effects flags;
 };
 
+
 class PlayingContext {
   private:
     struct sheet *sheetInfo;
     struct scale *scaleInfo;
   public:
-    PlayingContext() : PlayingContext(NULL,NULL) {};
+    PlayingContext() : PlayingContext(NULL, NULL) {};
     PlayingContext(struct sheet *_sheetInfo, struct scale *_scaleInfo) : sheetInfo(_sheetInfo), scaleInfo(_scaleInfo) { };
     float get_frequency(struct note_info ni) {
       int8_t transpose;
@@ -38,21 +42,8 @@ class PlayingContext {
     uint32_t getDurationMillis(struct note_info ni) {
       return getNoteLengthMillis(ni.duration, *sheetInfo);
     };
-    // TODO: put it in a player class
-    void play(unsigned long &nextTime, Tone toneVoice, note_info ni, unsigned long currentMillis){
-      float freq = this->get_frequency(ni);
-      uint32_t dur = this->getDurationMillis(ni);
-
-      if ((ni.flags & NOTE_IS_SILENCE) == 0)
-        toneVoice.play(round(freq), .955*dur);
     
-      
-      // we take into accound this loop's calculus time
-      nextTime = currentMillis + dur;
-    };
 };
-
-
 
 class Playable {
   private:
@@ -68,11 +59,72 @@ class Playable {
     Playable *useAgain() {
       ++nb_usage;
       return this;
-    };
+    }
     void unuse() {
       if (--nb_usage == 0) delete this;
-    };
+    }
 };
+
+class Player {
+   protected:
+     PlayingContext *pc;
+     Playable *voice;
+     uint8_t coordinates[MAX_DEPTH];
+     unsigned long nextTime;
+     boolean isReady(unsigned long millis) {
+      return nextTime <= millis;
+     }
+   public:
+     Player(PlayingContext *_pc, Playable *_voice) : pc(_pc), voice(_voice->useAgain()), coordinates({0}), nextTime(0) { }
+     boolean hasFinished() {return !voice->hasMore(coordinates, MAX_DEPTH, 0);}
+     void setVoice(Playable *_voice) {
+      if (voice != NULL)
+        voice->unuse();
+      voice = _voice->useAgain();
+      // reset coordinates
+      memset(coordinates, 0, sizeof coordinates);
+    }
+    virtual void playIfReady(unsigned long currentMillis) = 0;
+   
+};
+
+class TonePlayer : public Player {
+  private :
+    Tone *toneVoice;
+    
+  public:
+    TonePlayer(PlayingContext *_pc, Playable *_voice, Tone *_toneVoice) : Player(_pc, _voice), toneVoice(_toneVoice) { };
+    void playIfReady(unsigned long currentMillis) {
+      if (this->isReady(currentMillis)) {
+        if (voice->hasMore(coordinates, MAX_DEPTH, 0)) {
+          note_info ni = voice->getOne(coordinates, MAX_DEPTH, 0);
+          float freq = pc->get_frequency(ni);
+          uint32_t dur = pc->getDurationMillis(ni);
+    
+          if ((ni.flags & NOTE_IS_SILENCE) == 0)
+            toneVoice->play(round(freq), .955*dur);
+        
+          // we take into accound this loop's calculus time
+          nextTime = currentMillis + dur;
+        }
+      }
+    }
+
+};
+
+/**
+ * the null playable, play nothing at all (used when a voice is not initialized)
+ */
+class Nothing : public Playable {
+  public:
+    Nothing() { };
+    boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth) { return false;}
+    struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth) { return {};}
+    uint8_t getMaxDepth() {return 0;}
+};
+
+ static Playable *THE_NOTHING = new Nothing();
+
 
 /**
    The simplest Playable: one single playable stuff that defines a duration, callable with offset and octave
