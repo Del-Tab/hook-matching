@@ -25,7 +25,9 @@ class PlayingContext {
     struct scale *scaleInfo;
   public:
     PlayingContext(struct sheet *_sheetInfo, struct scale *_scaleInfo) : sheetInfo(_sheetInfo), scaleInfo(_scaleInfo) { };
-    struct sheet *getSheetInfo() {return sheetInfo;}
+    struct sheet *getSheetInfo() {
+      return sheetInfo;
+    }
     float get_frequency(struct note_info ni) {
       int8_t transpose;
       transpose = 0;
@@ -47,11 +49,11 @@ class PlayingContext {
       }
       return getFrequency(ni.degreeOffset, 5 + ni.octaveOffset, scaleInfo, transpose);
     };
-    
+
     uint32_t getDurationMillis(struct note_info ni) {
       return getNoteLengthMillis(ni.duration, *sheetInfo);
     };
-    
+
 };
 
 class Playable {
@@ -75,18 +77,20 @@ class Playable {
 };
 
 class Player {
-   protected:
-     PlayingContext *pc;
-     Playable *voice;
-     uint8_t coordinates[MAX_DEPTH];
-     unsigned long nextTime;
-     boolean isReady(unsigned long millis) {
+  protected:
+    PlayingContext *pc;
+    Playable *voice;
+    uint8_t coordinates[MAX_DEPTH];
+    unsigned long nextTime;
+    boolean isReady(unsigned long millis) {
       return nextTime <= millis;
-     }
-   public:
-     Player(PlayingContext *_pc, Playable *_voice) : pc(_pc), voice(_voice->useAgain()), coordinates{0}, nextTime(0) { }
-     boolean hasFinished() {return !voice->hasMore(coordinates, MAX_DEPTH, 0);}
-     void setVoice(Playable *_voice) {
+    }
+  public:
+    Player(PlayingContext *_pc, Playable *_voice) : pc(_pc), voice(_voice->useAgain()), coordinates{0}, nextTime(0) { }
+    boolean hasFinished() {
+      return !voice->hasMore(coordinates, MAX_DEPTH, 0);
+    }
+    void setVoice(Playable *_voice) {
       if (voice != NULL)
         voice->unuse();
       voice = _voice->useAgain();
@@ -94,13 +98,13 @@ class Player {
       memset(coordinates, 0, sizeof coordinates);
     }
     virtual void playIfReady(unsigned long currentMillis) = 0;
-   
+
 };
 
 class TonePlayer : public Player {
   private :
     Tone *toneVoice;
-    
+
   public:
     TonePlayer(PlayingContext *_pc, Playable *_voice, Tone *_toneVoice) : Player(_pc, _voice), toneVoice(_toneVoice) { };
     void playIfReady(unsigned long currentMillis) {
@@ -109,10 +113,10 @@ class TonePlayer : public Player {
           note_info ni = voice->getOne(coordinates, MAX_DEPTH, 0);
           float freq = pc->get_frequency(ni);
           uint32_t dur = pc->getDurationMillis(ni);
-    
+
           if ((ni.flags & NOTE_IS_SILENCE) == 0)
-            toneVoice->play(round(freq), .955*dur);
-        
+            toneVoice->play(round(freq), .955 * dur);
+
           // we take into accound this loop's calculus time
           nextTime = currentMillis + dur;
         }
@@ -125,17 +129,23 @@ class TonePlayer : public Player {
 
 
 /**
- * the null playable, play nothing at all (used when a voice is not initialized and you want to call methods without crashing)
- */
+   the null playable, play nothing at all (used when a voice is not initialized and you want to call methods without crashing)
+*/
 class Nothing : public Playable {
   public:
     Nothing() { };
-    boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth) { return false;}
-    struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth) { return {};}
-    uint8_t getMaxDepth() {return 0;}
+    boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth) {
+      return false;
+    }
+    struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth) {
+      return {};
+    }
+    uint8_t getMaxDepth() {
+      return 0;
+    }
 };
 
- static Playable *THE_NOTHING = new Nothing();
+static Playable *THE_NOTHING = new Nothing();
 
 
 
@@ -215,7 +225,7 @@ class LedMetronome : public Player {
       for (int i = 0; i <  pc->getSheetInfo()->top; ++i) {
         if (i == 0)
           oneMeasureBeat->add(beatNote, 15);
-        else if (i*2 == pc->getSheetInfo()->top)
+        else if (i * 2 == pc->getSheetInfo()->top)
           oneMeasureBeat->add(beatNote, 6);
         else
           oneMeasureBeat->add(beatNote, 2);
