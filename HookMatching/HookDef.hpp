@@ -24,7 +24,6 @@ class PlayingContext {
     struct sheet *sheetInfo;
     struct scale *scaleInfo;
   public:
-    PlayingContext() : PlayingContext(NULL, NULL) {};
     PlayingContext(struct sheet *_sheetInfo, struct scale *_scaleInfo) : sheetInfo(_sheetInfo), scaleInfo(_scaleInfo) { };
     struct sheet *getSheetInfo() {return sheetInfo;}
     float get_frequency(struct note_info ni) {
@@ -33,7 +32,12 @@ class PlayingContext {
 
       if ((ni.flags & NOTE_FORCE_SHARP) && (!isSharp(scaleInfo, ni.degreeOffset)))
         ++transpose;
+      if ((ni.flags & NOTE_FORCE_SHARP) && (isFlat(scaleInfo, ni.degreeOffset)))
+        ++transpose;
+
       if ((ni.flags & NOTE_FORCE_FLAT) && (!isFlat(scaleInfo, ni.degreeOffset)))
+        --transpose;
+      if ((ni.flags & NOTE_FORCE_FLAT) && (isSharp(scaleInfo, ni.degreeOffset)))
         --transpose;
       if ((ni.flags & NOTE_FORCE_NATURAL)) {
         if (isFlat(scaleInfo, ni.degreeOffset))
@@ -160,8 +164,7 @@ class RepeatHook : public Playable {
     int nb_cycles;
     ~RepeatHook();
   public:
-    RepeatHook(Playable *_p) : RepeatHook(_p, 0) { };
-    RepeatHook(Playable *_p, int _nb_cycles) : p(_p->useAgain()), nb_cycles(_nb_cycles) { };
+    RepeatHook(Playable *_p, int _nb_cycles = 0) : p(_p->useAgain()), nb_cycles(_nb_cycles) { };
 
     boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
     struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth);

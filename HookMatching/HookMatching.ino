@@ -14,17 +14,23 @@
  *     and it already breaks PWM.
  */
 #include <Tone.h>
-#define voicePin1 22  // I'm using digital pin 22 on my mega2560
+// pins for playing sound (one per voice) if you are using the TonePlayer implementation
+#define voicePin1 22
 #define voicePin2 24
 #define voicePin3 26
 #define stateLed 23 // digital pin 23 will be on on playing state
-#define HM_PLAY_BEAT
+#define HM_PLAY_BEAT // activates the LedMetronome
 #ifdef HM_PLAY_BEAT
-# define pulseLed 13  // pwm pin 13 would give the pulse if the tone library didn't break it
+// pwm pin for the LedMetronome
+# define pulseLed 13
 #endif
-Tone voice1,voice2,voice3;
-float LA4_REF = 440.0;
 
+// you MUST define this float once as a header request it
+float LA4_REF = 440.0;
+// TODO ref1 put them in the player and set them at construction
+Tone voice1,voice2,voice3;
+
+// TODO have a scale class interface and implementation, that will allow generator, and customized methods (currently we only support diatonic scales)
 struct scale GAMME_Do = {0, 0, NOTE_DO, "Do majeur"};
 
 // fa est #, note de base = mi
@@ -38,10 +44,14 @@ struct scale miMajeur = {B11011, 0, NOTE_MI, "mi majeur"};
 
 // E minor scale, 120 bpm (unit = halfbeat), 3/2 time signature
 // gamme de mi mineur, 120 bpm (unité de battement = blanche), rythme = 3/2 (3 temps par mesure, unité dde temps = blanche) 
+// TODO have a class for this, maybe the calling code will be easier. 
+// TODO maybe decorelate with scale, having correlation only in PlayingContext
 struct sheet tourdion = {&miMineur, 120, 48, 3, 2};
 
 PlayingContext * pc = new PlayingContext(&tourdion, &miMineur);
 
+// set up the 3 voices to play nothing for now (which hooks to play will be decided later)
+// TODO ref1 pins instead of voice
 Player *p1 = new TonePlayer(pc, THE_NOTHING, &voice1);
 Player *p2 = new TonePlayer(pc, THE_NOTHING, &voice2);
 Player *p3 = new TonePlayer(pc, THE_NOTHING, &voice3);
@@ -49,27 +59,41 @@ Player *p3 = new TonePlayer(pc, THE_NOTHING, &voice3);
 Player *metronome = new LedMetronome(pc, pulseLed);
 #endif
 
-void dummyPlay(Playable *p) {
-  p1->setVoice(p);
-  while (!p1->hasFinished()) {
-    p1->playIfReady(millis());
+// playing a list of note on a player is now as easy as this
+void dummyPlay(Player *player, Playable *playable) {
+  player->setVoice(playable);
+  while (!player->hasFinished()) {
+    player->playIfReady(millis());
   }
 }
 
-
-  Playable *blanche = new Note(48);             //half
-  Playable *noire = new Note(24);               //quarter
-  Playable *croche = new Note(12);              //eight's
-  Playable *blanchePointee = new Note(72);      //dottedHalf
-  Playable *ronde = new Note(96);               //full
-  Playable *rondePointee = new Note(144);       //dottedFull
-  Playable *fullCase = new Note(tourdion.top * tourdion.bottom * 24);
+  // first we are defining the raw notes to be used in the hooks
+  Playable *blanche = new Note(48);             //half (en) blanche (fr)
+  Playable *noire = new Note(24);               //quarter (en) noire (fr)
+  Playable *croche = new Note(12);              //eight's (en) croche (fr)
+  Playable *blanchePointee = new Note(72);      //dottedHalf (en) blanche pointée (fr)
+  Playable *ronde = new Note(96);               //full (en) ronde (fr)
+  Playable *rondePointee = new Note(144);       //dottedFull (en) ronde pointée (fr)
+  Playable *fullCase = new Note(tourdion.top * tourdion.bottom * 24); // a note during the full case (en) une représentation du temps de la mesure entière (fr)
+  /** 
+   * (en) A hook is a list of not to play with offset with respect to the hook containing them
+   *      In this example, we play 1st note at the height of the hook, then up one note, then up one note again, then down one note, then down one note,
+   *      all durations are quarter notes.
+   *  
+   * (fr) Un hook est une suite de notes avec des décalages par rapport à la référence passée par le hook les référençant. 
+   *      Ici , on joue une note à la hauteur désirée, on monte d'une note, puis d'une autre, on redescend d'une note, et d'une autre, sur des noires.
+   */
   Playable *hook1_1 = (new ListHook(6))->add(noire)
                                      ->add(noire, 1)
                                      ->add(noire, 2)
                                      ->add(noire, 3)
                                      ->add(noire, 2)
                                      ->add(noire, 1);
+  /** 
+   * (en) You can also go under the hook reference
+   * 
+   * (fr) On peut descendre aussi sous la reference du hook
+   */
   Playable *hook1_2 = (new ListHook(7))->add(noire) 
                                      ->add(noire,  1)
                                      ->add(noire, -1)
@@ -83,16 +107,36 @@ void dummyPlay(Playable *p) {
                                      ->add(ronde)
                                      ->add(blanche, -1)
                                      ->add(rondePointee);
+  /** 
+   * (en) Instead of a note, a hook can call another hook.
+   *      Here we show how to reuse hooks inside hooks:
+   *      - call the previously defined hook hook1_1 at the base level, 
+   *      - play a dotted half note at the base level
+   *      - play again the same hook one note upper on the scale (each element of this hook will be offset on the scale)
+   *      - play another hook at the base level,
+   *      - play again the 1st hook at the base level,
+   *      - play a third hook
+   */
   Playable *firstPhrase = (new ListHook(6))->add(hook1_1)
                                            ->add(blanchePointee)
                                            ->add(hook1_1, 1)
                                            ->add(hook1_2, 2)
                                            ->add(hook1_1)
                                            ->add(hook1_3);
+
+
   Playable *hook2_1 = (new ListHook(4))->add(blanchePointee)
                                        ->add(noire, -1)
                                        ->add(noire)
                                        ->add(noire,  1);
+  /**
+   * (en) You can have accidents, whether it will have an impact will be calculated against the scale.
+   *      For example forcing a sharp on an already sharp note will not have any effect.
+   *      If you force a flat to a sharp note on the scale it will be lowered by 2 half tones.
+   * 
+   * (fr) On gère les accidents correctement: si on force dièse sur une note qui est déjà un dièse ça n'aura pas d'effet.
+   *      Si on force un bémol sur une note qui est sensée être dièse sur la gamme elle sera baissée de 2 demi-tons.
+   */
   Playable *hook2_2 = (new ListHook(11))->add(ronde)
                                         ->add(blanche)
                                         ->add(noire,  2)
@@ -103,9 +147,7 @@ void dummyPlay(Playable *p) {
                                         ->add(noire, -3)
                                         ->add(blanchePointee, -2)
                                         ->add(noire, -3)
-                                        ->add(blanche, -4)
-                          ;
-  Playable *test = new RepeatHook(hook2_2);
+                                        ->add(blanche, -4);
   Playable *hook2_3 = (new ListHook(7))->add(blanchePointee)
                                       ->add(noire, -1)
                                       ->add(noire, -2)
@@ -113,6 +155,7 @@ void dummyPlay(Playable *p) {
                                       ->add(ronde, -4)
                                       ->add(blanche, -5)
                                       ->add(rondePointee, -4);
+  
   Playable *secondPhrase = (new ListHook(4))->add(hook2_1)
                                             ->add(hook2_2)
                                             ->add(hook2_1)
@@ -159,6 +202,12 @@ void dummyPlay(Playable *p) {
                                          ->add(blanche, -2)
                                          ->add(ronde, -5)
                                          ->add(rondePointee, -2);
+
+  /**
+   * (en) A RepeatHook is a hook that repeats the parameterized hook a given number of times, or infinitely if the number is omitted or set to 0
+   * 
+   * (fr) Un RepeatHook est un hook qui permet de répéter le hook en paramètre un nombre choisi de fois, ou indéfiniment si ce nombre est 0 ou omis
+   */
   Playable *b_firstPhrase = (new ListHook(4))->add(new RepeatHook(b_Hook1_1, 2))
                                              ->add(b_Hook1_2, 2)
                                              ->add(b_Hook1_1)
@@ -171,45 +220,49 @@ void dummyPlay(Playable *p) {
                                               ->add(b_Hook2_1, 2);
 
   Playable *fullSoprano = (new ListHook(3))->add(new RepeatHook(c_firstPhrase, 2), 2)
-                                            ->add(new RepeatHook(c_secondPhrase, 2), 7);
+                                           ->add(new RepeatHook(c_secondPhrase, 2), 7);
   Playable *fullAlto = (new ListHook(3))->add(new RepeatHook(firstPhrase, 2))
-                                             ->add(new RepeatHook(secondPhrase, 2), 4);
+                                        ->add(new RepeatHook(secondPhrase, 2), 4);
   Playable *fullHommes = (new ListHook(3))->add(new RepeatHook(b_firstPhrase, 2))
-                                             ->add(new RepeatHook(b_secondPhrase, 2));
-
+                                          ->add(new RepeatHook(b_secondPhrase, 2));
+  // TODO show we can call unuse and explain how to free memory
 #ifdef HM_PLAY_BEAT 
   Playable *beat; // beat is set in setup()
 #endif
 
-//unsigned long nextPlayedBeat = 0;
-//float brightness = 0;
+// here are the top hooks. We will play each of them start with silence during 2 fullCases in order to show that the led metronome playing before we can hear sound.
 Playable *tourdionVoice1 = (new ListHook(6))->add(new RepeatHook(fullCase, 2), 0, NOTE_IS_SILENCE)
                                     ->add(fullAlto)
                                     ->add(fullCase, 0, NOTE_IS_SILENCE);
-Playable *tourdionVoice2 = (new ListHook(5))->add(new RepeatHook(fullCase, 2), 0, NOTE_IS_SILENCE )
-                                    ->add(fullHommes);
-Playable *tourdionVoice3 = (new ListHook(5))->add(new RepeatHook(fullCase, 2), 0, NOTE_IS_SILENCE )
-                                    ->add(fullSoprano);
+Playable *tourdionVoice2 = (new ListHook(5))->add(new RepeatHook(fullCase, 2), 0, NOTE_IS_SILENCE)
+                                            ->add(fullHommes);
+Playable *tourdionVoice3 = (new ListHook(5))->add(new RepeatHook(fullCase, 2), 0, NOTE_IS_SILENCE)
+                                            ->add(fullSoprano);
 void setup() {
   
-  
+  // TODO ref1 inside the player
   voice1.begin(voicePin1);
   voice2.begin(voicePin2);
   voice3.begin(voicePin3);
-  
   pinMode(voicePin1, OUTPUT);
+  pinMode(voicePin2, OUTPUT);
+  pinMode(voicePin3, OUTPUT);
+  
   pinMode(stateLed, OUTPUT);
 
   Serial.begin(9600);
 
   // play some jingle in the set scale
+  // the jingle will be one octave lower using this trick
+  LA4_REF = 220.0;
   ListHook *suite = new ListHook(6);
   suite->add(blanche, -2);
   for (int i = 1; i <  5; ++i)
     suite->add(croche, i - 2);
   suite->add(blanche, 3);
-  dummyPlay(suite);
-  LA4_REF = 220.0;
+  dummyPlay(p1, suite);
+  // go back to the normal pitch
+  LA4_REF = 440.0;
   delay(2000);
   digitalWrite(stateLed, HIGH);
   p1->setVoice(tourdionVoice1);
