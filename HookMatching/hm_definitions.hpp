@@ -100,7 +100,7 @@ float getFrequency(const int8_t degree, const uint8_t octave,  struct scale cons
 
 
 struct sheet {
-  struct scale * scale;
+  struct scale * default_scale;
   uint16_t bpm; // may ranges from 96 to 480
   note_duration bpm_unit;
   uint8_t top;    // number of time unit per "mesure"

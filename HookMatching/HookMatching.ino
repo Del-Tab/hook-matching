@@ -3,18 +3,23 @@
 #include "HookDef.hpp"
 #include <avr/sleep.h>
 /*
-   WARNING for this include to work on Arduino Mega 2560 R3,
-     open, from your Arduino install folder,
-     the file libraries/Tones/Tone.cpp, and replace every occurence of
+   This program is available, and maintained (maybe ;-) ) here: https://github.com/DelTa-B/hook-matching
+   
+   WARNING for this program to work (in current version) you need to download the Tone library by Brett Hagman
+   You may find this library in the Arduino IDE market place (under Tools-> manage libraries)
+   or download it on Brett Hagman's github here: https://github.com/bhagman/Tone
+   on Arduino Mega 2560 R3, you must modify it to handle all the available timers
+   - Open, from your Arduino install folder,
+     the file libraries/Tones/Tone.cpp.
+   - Replace every occurence of
      #if defined(__AVR_ATmega1280__)
      by
      #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-     then compile and send to your arduino :)
+     then you can compile your sketch and send to your arduino :)
      This trick was not tested with more than 3 tone instances
        and it already breaks PWM.
 */
-#include <Tone.h>
-// pins for playing sound (one per voice) if you are using the TonePlayer implementation
+// pins for playing sound (one per voice) if you are using the TonePlayer implementation (which will be removed one day)
 #define voicePin1 22
 #define voicePin2 24
 #define voicePin3 26
@@ -27,8 +32,6 @@
 
 // you MUST define this float once as a header request it
 float LA4_REF = 440.0;
-// TODO ref1 put them in the player and set them at construction
-Tone voice1, voice2, voice3;
 
 // TODO have a scale class interface and implementation, that will allow generator, and customized methods (currently we only support diatonic scales)
 struct scale GAMME_Do = {0, 0, NOTE_DO, "Do majeur"};
@@ -48,13 +51,11 @@ struct scale miMajeur = {B11011, 0, NOTE_MI, "mi majeur"};
 // TODO maybe decorelate with scale, having correlation only in PlayingContext
 struct sheet tourdion = {&miMineur, 120, 48, 3, 2};
 
-PlayingContext * pc = new PlayingContext(&tourdion, &miMineur);
+PlayingContext * pc = new PlayingContext(&tourdion);
 
 // set up the 3 voices to play nothing for now (which hooks to play will be decided later)
-// TODO ref1 pins instead of voice
-Player *p1 = new TonePlayer(pc, THE_NOTHING, &voice1);
-Player *p2 = new TonePlayer(pc, THE_NOTHING, &voice2);
-Player *p3 = new TonePlayer(pc, THE_NOTHING, &voice3);
+Player *p1,*p2,*p3;
+
 #ifdef HM_PLAY_BEAT
 Player *metronome = new LedMetronome(pc, pulseLed);
 #endif
@@ -110,12 +111,21 @@ Playable *hook1_3 = (new ListHook(6))->add(blanche)
 /**
    (en) Instead of a note, a hook can call another hook.
         Here we show how to reuse hooks inside hooks:
-        - call the previously defined hook hook1_1 at the base level,
+        - call the previously defined hook hook1_1 at the base level, (its content will be played recursively)
         - play a dotted half note at the base level
         - play again the same hook one note upper on the scale (each element of this hook will be offset on the scale)
-        - play another hook at the base level,
+        - play another hook, hook1_2, yet anothe note upper,
         - play again the 1st hook at the base level,
         - play a third hook
+
+   (fr) Au lieu d'une note, un hook peut contenir un autre hook
+       Pour ce hook, voici comment réutiliser des hooks à l'intérieur de hooks, ainsi on va
+       - appeler le hook hook1_1 défini précédement au niveau de base (son contenu va être joué par récursion)
+       - jouer une blanche pointée au niveau de base
+       - rejouer encore ce hook un note au dessus sur la gamme (chaque note ou sous-hook de ce hook vont être décalés sur la gamme)
+       - jouer un autre hook, hook1_2, encore une note au dessus
+       - jouer une nouvelle fois le premier hook au niveau de base
+       - jouer un 3ème hook
 */
 Playable *firstPhrase = (new ListHook(6))->add(hook1_1)
                         ->add(blanchePointee)
@@ -239,14 +249,9 @@ Playable *tourdionVoice2 = (new ListHook(5))->add(new RepeatHook(fullCase, 2), 0
 Playable *tourdionVoice3 = (new ListHook(5))->add(new RepeatHook(fullCase, 2), 0, NOTE_IS_SILENCE)
                            ->add(fullSoprano);
 void setup() {
-
-  // TODO ref1 inside the player
-  voice1.begin(voicePin1);
-  voice2.begin(voicePin2);
-  voice3.begin(voicePin3);
-  pinMode(voicePin1, OUTPUT);
-  pinMode(voicePin2, OUTPUT);
-  pinMode(voicePin3, OUTPUT);
+  p1 = new TonePlayer(pc, voicePin1, THE_NOTHING);
+  p2 = new TonePlayer(pc, voicePin2, THE_NOTHING);
+  p3 = new TonePlayer(pc, voicePin3, THE_NOTHING);
 
   pinMode(stateLed, OUTPUT);
 

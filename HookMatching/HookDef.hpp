@@ -18,13 +18,12 @@ struct note_info {
   effects flags;
 };
 
-
 class PlayingContext {
   private:
     struct sheet *sheetInfo;
     struct scale *scaleInfo;
   public:
-    PlayingContext(struct sheet *_sheetInfo, struct scale *_scaleInfo) : sheetInfo(_sheetInfo), scaleInfo(_scaleInfo) { };
+    PlayingContext(struct sheet *_sheetInfo) : sheetInfo(_sheetInfo), scaleInfo(_sheetInfo->default_scale) { };
     struct sheet *getSheetInfo() {
       return sheetInfo;
     }
@@ -101,12 +100,16 @@ class Player {
 
 };
 
+
+/*
+
+*/
 class TonePlayer : public Player {
   private :
     Tone *toneVoice;
 
   public:
-    TonePlayer(PlayingContext *_pc, Playable *_voice, Tone *_toneVoice) : Player(_pc, _voice), toneVoice(_toneVoice) { };
+    TonePlayer(PlayingContext *_pc, uint8_t tonePin, Playable *_voice) : Player(_pc, _voice), toneVoice(new Tone()) {toneVoice->begin(tonePin); };
     void playIfReady(unsigned long currentMillis) {
       if (this->isReady(currentMillis)) {
         if (voice->hasMore(coordinates, MAX_DEPTH, 0)) {
