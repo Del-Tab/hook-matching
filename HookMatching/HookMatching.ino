@@ -10,7 +10,7 @@
    or download it on Brett Hagman's github here: https://github.com/bhagman/Tone
    on Arduino Mega 2560 R3, you must modify it to handle all the available timers
    - Open, from your Arduino install folder,
-     the file libraries/Tones/Tone.cpp.
+     the file libraries/Tone/Tone.cpp.
    - Replace every occurence of
      #if defined(__AVR_ATmega1280__)
      by
@@ -19,7 +19,7 @@
      This trick was not tested with more than 3 tone instances
        and it already breaks PWM.
 */
-// pins for playing sound (one per voice) if you are using the TonePlayer implementation (which will be removed one day)
+// pins for playing sound (one per voice) if you are using the TonePlayer implementation (which will be removed one day because number of voices is too limited)
 #define voicePin1 22
 #define voicePin2 24
 #define voicePin3 26
@@ -48,7 +48,6 @@ struct scale miMajeur = {B11011, 0, NOTE_MI, "mi majeur"};
 // E minor scale, 120 bpm (unit = halfbeat), 3/2 time signature
 // gamme de mi mineur, 120 bpm (unité de battement = blanche), rythme = 3/2 (3 temps par mesure, unité dde temps = blanche)
 // TODO have a class for this, maybe the calling code will be easier.
-// TODO maybe decorelate with scale, having correlation only in PlayingContext
 struct sheet tourdion = {&miMineur, 120, 48, 3, 2};
 
 PlayingContext * pc = new PlayingContext(&tourdion);
@@ -249,30 +248,29 @@ Playable *tourdionVoice2 = (new ListHook(5))->add(new RepeatHook(fullCase, 2), 0
 Playable *tourdionVoice3 = (new ListHook(5))->add(new RepeatHook(fullCase, 2), 0, NOTE_IS_SILENCE)
                            ->add(fullSoprano);
 void setup() {
+  // we can create a player without setting what to play now on 1st player, we can use THE_NOTHING which will play nothing if the player is called
   p1 = new TonePlayer(pc, voicePin1, THE_NOTHING);
-  p2 = new TonePlayer(pc, voicePin2, THE_NOTHING);
-  p3 = new TonePlayer(pc, voicePin3, THE_NOTHING);
+  p2 = new TonePlayer(pc, voicePin2, tourdionVoice2);
+  p3 = new TonePlayer(pc, voicePin3, tourdionVoice3);
 
   pinMode(stateLed, OUTPUT);
 
   Serial.begin(9600);
 
   // play some jingle in the set scale
-  // the jingle will be one octave lower using this trick
+  // the jingle will be one octave lower using this trick (to show wa can interact with the pitch on real time)
   LA4_REF = 220.0;
   ListHook *suite = new ListHook(6);
-  suite->add(blanche, -2);
-  for (int i = 1; i <  5; ++i)
+  suite->add(blanche, -2);          // one half note
+  for (int i = 1; i <  5; ++i)      // 4 more notes, on the scale, they are eight's note
     suite->add(croche, i - 2);
-  suite->add(blanche, 3);
-  dummyPlay(p1, suite);
+  suite->add(blanche, 3);           // one half note
+  dummyPlay(p1, suite);             // this changes the voice played on Player p1
   // go back to the normal pitch
   LA4_REF = 440.0;
   delay(2000);
   digitalWrite(stateLed, HIGH);
   p1->setVoice(tourdionVoice1);
-  p2->setVoice(tourdionVoice2);
-  p3->setVoice(tourdionVoice3);
 }
 int state = 0; // playing
 void loop() {

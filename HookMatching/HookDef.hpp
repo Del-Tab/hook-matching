@@ -31,15 +31,20 @@ class PlayingContext {
       int8_t transpose;
       transpose = 0;
 
-      if ((ni.flags & NOTE_FORCE_SHARP) && (!isSharp(scaleInfo, ni.degreeOffset)))
-        ++transpose;
-      if ((ni.flags & NOTE_FORCE_SHARP) && (isFlat(scaleInfo, ni.degreeOffset)))
-        ++transpose;
+      if (ni.flags & NOTE_FORCE_SHARP) { 
+        if (!isSharp(scaleInfo, ni.degreeOffset))
+          ++transpose;
+        if (isFlat(scaleInfo, ni.degreeOffset))
+          ++transpose;
+      }
 
-      if ((ni.flags & NOTE_FORCE_FLAT) && (!isFlat(scaleInfo, ni.degreeOffset)))
-        --transpose;
-      if ((ni.flags & NOTE_FORCE_FLAT) && (isSharp(scaleInfo, ni.degreeOffset)))
-        --transpose;
+      if (ni.flags & NOTE_FORCE_FLAT) {
+        if (!isFlat(scaleInfo, ni.degreeOffset))
+          --transpose;
+        if (isSharp(scaleInfo, ni.degreeOffset))
+          --transpose;
+      }
+      
       if ((ni.flags & NOTE_FORCE_NATURAL)) {
         if (isFlat(scaleInfo, ni.degreeOffset))
           ++transpose;
@@ -47,11 +52,11 @@ class PlayingContext {
           --transpose;
       }
       return getFrequency(ni.degreeOffset, 5 + ni.octaveOffset, scaleInfo, transpose);
-    };
+    }
 
     uint32_t getDurationMillis(struct note_info ni) {
       return getNoteLengthMillis(ni.duration, *sheetInfo);
-    };
+    }
 
 };
 
@@ -107,7 +112,6 @@ class Player {
 class TonePlayer : public Player {
   private :
     Tone *toneVoice;
-
   public:
     TonePlayer(PlayingContext *_pc, uint8_t tonePin, Playable *_voice) : Player(_pc, _voice), toneVoice(new Tone()) {toneVoice->begin(tonePin); };
     void playIfReady(unsigned long currentMillis) {
@@ -136,12 +140,12 @@ class TonePlayer : public Player {
 */
 class Nothing : public Playable {
   public:
-    Nothing() { };
+    Nothing() { }
     boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth) {
       return false;
     }
     struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth) {
-      return {};
+      return {};   // thou shall not call getOne() when hasMore returned false
     }
     uint8_t getMaxDepth() {
       return 0;
@@ -160,7 +164,7 @@ class Note : public Playable {
     note_duration duration;
 
   public:
-    Note(note_duration _duration): duration(_duration) { };
+    Note(note_duration _duration): duration(_duration) { }
     boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
     struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
     uint8_t getMaxDepth();
@@ -177,11 +181,11 @@ class RepeatHook : public Playable {
     int nb_cycles;
     ~RepeatHook();
   public:
-    RepeatHook(Playable *_p, int _nb_cycles = 0) : p(_p->useAgain()), nb_cycles(_nb_cycles) { };
+    RepeatHook(Playable *_p, int _nb_cycles = 0) : p(_p->useAgain()), nb_cycles(_nb_cycles) { }
 
     boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
     struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
-    uint8_t getMaxDepth() ;
+    uint8_t getMaxDepth();
 };
 
 /**
@@ -204,10 +208,10 @@ class ListHook : public Playable {
 
     ListHook *add(Playable *p) {
       return add(p, 0, 0);
-    };
+    }
     ListHook *add(Playable *p, int8_t degreeOffset) {
       return add(p, degreeOffset, 0);
-    };
+    }
     ListHook *add(Playable *p, int8_t degreeOffset, effects flags);
     boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
     struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth);

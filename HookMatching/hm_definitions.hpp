@@ -91,7 +91,6 @@ struct scale_hook {
 };
 
 struct contextual_scale_hook {
-
   uint8_t octave;
   uint8_t note;
   struct scale_hook *hook;
@@ -101,8 +100,8 @@ float getFrequency(const int8_t degree, const uint8_t octave,  struct scale cons
 
 struct sheet {
   struct scale * default_scale;
-  uint16_t bpm; // may ranges from 96 to 480
-  note_duration bpm_unit;
+  uint16_t bpm; // most of the time ranges from 96 to 480, just don't chose 0
+  note_duration bpm_unit; //24 when bpm is expressed on the quarter note, 48 on the half note
   uint8_t top;    // number of time unit per "mesure"
   uint8_t bottom; // if it's 4, blacks are one time unit, if it's 2, white ahre 1 time unit, if it's 8 "croches" are 1 time unit etc
 };

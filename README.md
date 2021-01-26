@@ -36,7 +36,7 @@ I'll create a branch for each video demo you may find on the web done by me. Bra
  - having a registry of already existing hook to avoid memory overuse and leaks
  - learn the English wordings for music stuff and translate it :)
  - clean up the code and make it easy to use
- - guess which chord to play alone with the played music
+ - guess which chord to play along with the played music
  - an engine to find better hook representation for a whole partition
  - implement a recycled memory pool to avoid malloc fragmentation
  - add scematics for a decent interface :)

@@ -77,7 +77,7 @@ boolean ListHook::hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth) {
   if (hc[depth] >= number)
     return false;
   list[hc[depth]].p->hasMore(hc, maxDepth, depth + 1);
-};
+}
 struct note_info ListHook::getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth) {
   struct PlayableChild pc = list[hc[depth]];
   note_info ret = pc.p->getOne(hc, maxDepth, depth + 1);
