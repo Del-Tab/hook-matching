@@ -1,5 +1,5 @@
-#ifndef HOOK_MATCHING_HPP
-#define HOOK_MATCHING_HPP
+#ifndef HM_MUSIC_HPP
+#define HM_MUSIC_HPP
 
 #include "hm_definitions.hpp"
 

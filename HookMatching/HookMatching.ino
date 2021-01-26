@@ -59,11 +59,11 @@ Player *p1,*p2,*p3;
 Player *metronome = new LedMetronome(pc, pulseLed);
 #endif
 
-// playing a list of note on a player is now as easy as this
+// playing a list of note on an already created player is now as easy as this
 void dummyPlay(Player *player, Playable *playable) {
-  player->setVoice(playable);
-  while (!player->hasFinished()) {
-    player->playIfReady(millis());
+  player->setVoice(playable);           // setting the voice in the plager
+  while (!player->hasFinished()) {      // while the player has not finished playing
+    player->playIfReady(millis());      // call this method with the millisecond as parameter
   }
 }
 
@@ -247,6 +247,8 @@ Playable *tourdionVoice2 = (new ListHook(5))->add(new RepeatHook(fullCase, 2), 0
                            ->add(fullHommes);
 Playable *tourdionVoice3 = (new ListHook(5))->add(new RepeatHook(fullCase, 2), 0, NOTE_IS_SILENCE)
                            ->add(fullSoprano);
+
+int state = 0; // playing
 void setup() {
   // we can create a player without setting what to play now on 1st player, we can use THE_NOTHING which will play nothing if the player is called
   p1 = new TonePlayer(pc, voicePin1, THE_NOTHING);
@@ -272,7 +274,7 @@ void setup() {
   digitalWrite(stateLed, HIGH);
   p1->setVoice(tourdionVoice1);
 }
-int state = 0; // playing
+
 void loop() {
   // put your main code here, to run repeatedly:
 
@@ -291,7 +293,7 @@ void loop() {
     }
     p1->playIfReady(currentMillis);
     p2->playIfReady(currentMillis);
-    p2->playIfReady(currentMillis);
+    p3->playIfReady(currentMillis);
 
 #ifdef HM_PLAY_BEAT
     metronome->playIfReady(currentMillis);

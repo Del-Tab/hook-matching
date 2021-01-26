@@ -1,5 +1,5 @@
-#ifndef HOOKDEF_HPP
-#define HOOKDEF_HPP
+#ifndef HM_HOOKDEF_HPP
+#define HM_HOOKDEF_HPP
 #include <Arduino.h>
 #include "hm_definitions.hpp"
 #include "hm_music.hpp"
@@ -92,7 +92,7 @@ class Player {
   public:
     Player(PlayingContext *_pc, Playable *_voice) : pc(_pc), voice(_voice->useAgain()), coordinates{0}, nextTime(0) { }
     boolean hasFinished() {
-      return !voice->hasMore(coordinates, MAX_DEPTH, 0);
+      return !voice->hasMore(coordinates, MAX_DEPTH, 0) && isReady(millis());
     }
     void setVoice(Playable *_voice) {
       if (voice != NULL)
