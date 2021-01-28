@@ -4,7 +4,7 @@
 #include <avr/sleep.h>
 /*
    This program is available, and maintained (maybe ;-) ) here: https://github.com/DelTa-B/hook-matching
-   
+
    WARNING for this program to work (in current version) you need to download the Tone library by Brett Hagman
    You may find this library in the Arduino IDE market place (under Tools-> manage libraries)
    or download it on Brett Hagman's github here: https://github.com/bhagman/Tone
@@ -20,18 +20,44 @@
        and it already breaks PWM.
 */
 // pins for playing sound (one per voice) if you are using the TonePlayer implementation (which will be removed one day because number of voices is too limited)
-#define voicePin1 22
-#define voicePin2 24
-#define voicePin3 26
+static int voicePin1 = 22;
+static int voicePin2 = 24;
+static int voicePin3 = 26;
+// pin for led telling which state we are in
 #define stateLed 23 // digital pin 23 will be on on playing state
+
+// pin for interrupts dealing with rotary encoder
+static int CHA = 2; // must be an interrupt pin
+static int CHB = 40;
+volatile int8_t rotaryEncoder = 0; // the value of the rotary encoder, fated to be consumed into a chosen variable
+
+
 #define HM_PLAY_BEAT // activates the LedMetronome
 #ifdef HM_PLAY_BEAT
 // pwm pin for the LedMetronome
-# define pulseLed 13
+static int pulseLed = 13;
 #endif
 
 // you MUST define this float once as a header request it
 float LA4_REF = 440.0;
+
+void interruptLowCHA() {
+  static unsigned long lastTime = 0;
+  static unsigned long thisTime = 0; // The sole reason this one is static is to avoid heap allocation and have a shorter interrupt
+  // a tutorial that really works https://www.youtube.com/watch?v=J9cDEef0IbQ
+  // Thank you Ralph S Bacon https://www.youtube.com/RalphBacon
+  thisTime = millis();
+  if (thisTime - lastTime > 5) {
+    if (digitalRead(CHB)) // only read CHB because CHA is interrupting
+      ++rotaryEncoder;
+    else
+      --rotaryEncoder;
+
+    lastTime = thisTime;
+  }
+}
+
+
 
 // TODO have a scale class interface and implementation, that will allow generator, and customized methods (currently we only support diatonic scales)
 struct scale GAMME_Do = {0, 0, NOTE_DO, "Do majeur"};
@@ -256,7 +282,9 @@ void setup() {
   p3 = new TonePlayer(pc, voicePin3, tourdionVoice3);
 
   pinMode(stateLed, OUTPUT);
-
+  pinMode(CHA, INPUT_PULLUP);
+  pinMode(CHB, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(CHA), interruptLowCHA, LOW);
   Serial.begin(9600);
 
   // play some jingle in the set scale
@@ -274,11 +302,21 @@ void setup() {
   digitalWrite(stateLed, HIGH);
   p1->setVoice(tourdionVoice1);
 }
-
+void(* resetFunc) (void) = 0;
 void loop() {
-  // put your main code here, to run repeatedly:
-
   if (state == 0) {
+    if (rotaryEncoder != 0) {
+      Serial.print("+");
+      Serial.print(rotaryEncoder);
+      Serial.print("\t");
+      Serial.print(LA4_REF);
+      Serial.print(" -> ");
+      cli();
+      LA4_REF += rotaryEncoder;
+      rotaryEncoder = 0;
+      sei();
+      Serial.println(LA4_REF);
+    }
     unsigned long currentMillis = millis();
 
     if (p1->hasFinished()) {
@@ -295,6 +333,9 @@ void loop() {
     p2->playIfReady(currentMillis);
     p3->playIfReady(currentMillis);
 
+    // simulate that other calculus take time to show the interupt is robust
+    // warning: desynchronizes notes ! Synchronization hook is not implemented yet
+    //delay(20);
 #ifdef HM_PLAY_BEAT
     metronome->playIfReady(currentMillis);
 #endif
