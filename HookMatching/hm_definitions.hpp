@@ -43,9 +43,6 @@
 #define NOTE_SENSIBLE NOTE_SEPTIEME
 #define NOTE_OCTAVE 7;
 
-#define FORCE_SHARP 1
-#define FORCE_FLAT 2
-#define FORCE_NATURAL 4
 
 extern float LA4_REF;
 
@@ -55,46 +52,14 @@ typedef uint8_t note;           // 0 for C, 1 for D, etc.
 /** scale is a description of the rule on which the note walks.
    Definition is made taking the C major scale as reference, which is what you get by only playing white notes on a piano
 */
-
+// TODO ref1 scale class
 struct scale {
   uint8_t sharps;        // binary map from right to left, starting from do: 1 if sharp
   uint8_t flats;         // binary map from right to left, starting from do: 1 if flat
   note note_base;        // the NOTE_something telling which note is the Tonic
   const char *display_name;    // a fancy name to display
 };
-
-typedef struct hook2 *hook2_p;
-struct hook2_placed {
-  int8_t degreeOffset;
-  hook2_p *recur_hook;
-};
-
-
-struct hook2_block {
-  note_duration duration;
-  size_t num;
-  struct hook2_placed placed[];
-};
-struct hook2 {
-  size_t num;
-  struct hook2_block blocks[];
-};
-
-struct hookpart {
-  int8_t degreeOffset;
-  note_duration duration;
-};
-
-struct scale_hook {
-  size_t number;
-  struct hookpart part [];
-};
-
-struct contextual_scale_hook {
-  uint8_t octave;
-  uint8_t note;
-  struct scale_hook *hook;
-};
+// TODO ref1
 float getFrequency(const int8_t degree, const uint8_t octave,  struct scale const *g);
 
 
