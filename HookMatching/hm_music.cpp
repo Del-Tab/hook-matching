@@ -24,6 +24,7 @@ int hm_div(int a, int b)
   return (int)ret;
 }
 
+
 float getFrequency(const int8_t degree, const uint8_t octave, struct scale const *g, const int8_t transpose) {
   // Getting base do (C) from current octave ...
   int16_t offsetFromLa440 = getMidiNote(degree, octave, g) + transpose;

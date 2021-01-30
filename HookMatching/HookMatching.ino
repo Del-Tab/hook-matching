@@ -2,6 +2,7 @@
 #include "hm_music.hpp"
 #include "HookDef.hpp"
 #include <avr/sleep.h>
+#include "hm_scale.hpp"
 /*
    This program is available, and maintained (maybe ;-) ) here: https://github.com/DelTa-B/hook-matching
 
@@ -286,7 +287,16 @@ void setup() {
   pinMode(CHB, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(CHA), interruptLowCHA, LOW);
   Serial.begin(9600);
-
+// test Scale constructor
+  Scale *s1 = new DiatonicScale("3#M");
+  Scale *s2 = new DiatonicScale("3#m");
+  Scale *s3 = new DiatonicScale("2bM");
+  Scale *s4 = new DiatonicScale("2bm");
+  Serial.println("Scales:");
+  Serial.println(s1->getName());
+  Serial.println(s2->getName());
+  Serial.println(s3->getName());
+  Serial.println(s4->getName());
   // play some jingle in the set scale
   // the jingle will be one octave lower using this trick (to show wa can interact with the pitch on real time)
   LA4_REF = 220.0;

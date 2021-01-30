@@ -43,4 +43,4 @@ float getFrequency(int8_t degree, uint8_t octave,  struct scale const *g) ;
 // TODO replace by a method in the "scale" class
 uint8_t getSensible(const struct scale *scale);
 uint8_t getDominante(const struct scale *scale);
-#endif
+#endif // HM_MUSIC_HPP

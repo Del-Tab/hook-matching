@@ -257,4 +257,4 @@ class LedMetronome : public Player {
       }
     }
 };
-#endif
+#endif // HM_HOOKDEF_HPP
