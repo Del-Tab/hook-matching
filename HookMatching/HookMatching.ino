@@ -72,7 +72,7 @@ struct sheet tourdion = {mi_mineur, 120, 48, 3, 2};
 PlayingContext * pc = new PlayingContext(&tourdion);
 
 // set up the 3 voices to play nothing for now (which hooks to play will be decided later)
-Player *p1,*p2,*p3;
+Player *p1, *p2, *p3;
 
 #ifdef HM_PLAY_BEAT
 Player *metronome = new LedMetronome(pc, pulseLed);
@@ -279,7 +279,7 @@ void setup() {
   pinMode(CHB, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(CHA), interruptLowCHA, LOW);
   Serial.begin(9600);
-// test Scale constructor
+  // test Scale constructor
   Scale *s1 = new DiatonicScale("3#M");
   Scale *s2 = new DiatonicScale("3#m");
   Scale *s3 = new DiatonicScale("2bM");

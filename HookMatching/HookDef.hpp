@@ -86,7 +86,9 @@ class TonePlayer : public Player {
   private :
     Tone *toneVoice;
   public:
-    TonePlayer(PlayingContext *_pc, uint8_t tonePin, Playable *_voice) : Player(_pc, _voice), toneVoice(new Tone()) {toneVoice->begin(tonePin); };
+    TonePlayer(PlayingContext *_pc, uint8_t tonePin, Playable *_voice) : Player(_pc, _voice), toneVoice(new Tone()) {
+      toneVoice->begin(tonePin);
+    };
     void playIfReady(unsigned long currentMillis) {
       if (this->isReady(currentMillis)) {
         if (voice->hasMore(coordinates, MAX_DEPTH, 0)) {
