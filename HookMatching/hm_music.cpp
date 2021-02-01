@@ -2,10 +2,6 @@
 
 #include "hm_music.hpp"
 
-static const uint8_t diatonic_offsets[] = {0, 2, 4, 5, 7, 9, 11};
-static const uint8_t scaleSize = sizeof diatonic_offsets / sizeof diatonic_offsets[0];
-
-
 int hm_mod(int a, int b)
 {
   if (b < 0)

@@ -17,38 +17,15 @@
 class PlayingContext {
   private:
     struct sheet *sheetInfo;
-    struct scaleDeprecated *scaleInfoDeprecated;
-    //Scale *scaleInfo;
+    //struct scaleDeprecated *scaleInfoDeprecated;
+    Scale *scaleInfo;
   public:
-    PlayingContext(struct sheet *_sheetInfo) : sheetInfo(_sheetInfo), scaleInfoDeprecated(_sheetInfo->default_scale) { };
+    PlayingContext(struct sheet *_sheetInfo) : sheetInfo(_sheetInfo), scaleInfo(_sheetInfo->default_scale) { };
     struct sheet *getSheetInfo() {
       return sheetInfo;
     }
     float get_frequency(struct note_info ni) {
-      int8_t transpose;
-      transpose = 0;
-
-      if (ni.flags & NOTE_FORCE_SHARP) { 
-        if (!isSharp(scaleInfoDeprecated, ni.degreeOffset))
-          ++transpose;
-        if (isFlat(scaleInfoDeprecated, ni.degreeOffset))
-          ++transpose;
-      }
-
-      if (ni.flags & NOTE_FORCE_FLAT) {
-        if (!isFlat(scaleInfoDeprecated, ni.degreeOffset))
-          --transpose;
-        if (isSharp(scaleInfoDeprecated, ni.degreeOffset))
-          --transpose;
-      }
-      
-      if ((ni.flags & NOTE_FORCE_NATURAL)) {
-        if (isFlat(scaleInfoDeprecated, ni.degreeOffset))
-          ++transpose;
-        if (isSharp(scaleInfoDeprecated, ni.degreeOffset))
-          --transpose;
-      }
-      return getFrequency(ni.degreeOffset, 5 + ni.octaveOffset, scaleInfoDeprecated, transpose);
+      return scaleInfo->get_frequency(ni);
     }
 
     uint32_t getDurationMillis(struct note_info ni) {

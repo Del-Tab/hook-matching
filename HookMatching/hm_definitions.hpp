@@ -71,14 +71,7 @@ struct note_info {
 float getFrequency(const int8_t degree, const uint8_t octave,  struct scaleDeprecated const *g);
 
 
-struct sheet {
-  // TODO ref1
-  struct scaleDeprecated * default_scale;
-  uint16_t bpm; // most of the time ranges from 96 to 480, just don't chose 0
-  note_duration bpm_unit; //24 when bpm is expressed on the quarter note, 48 on the half note
-  uint8_t top;    // number of time unit per "mesure"
-  note_duration bottom; // if it's 4, blacks are one time unit, if it's 2, white ahre 1 time unit, if it's 8 "croches" are 1 time unit etc
-};
+
 
 typedef int (*PLAY_CB)(void * context, float freq, uint32_t duration);
 
