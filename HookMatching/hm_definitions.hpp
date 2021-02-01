@@ -1,6 +1,7 @@
 #ifndef HM_DEFINITONS_HPP
 #define HM_DEFINITONS_HPP
 #include <Tone.h>
+
 /*
    please keep this reference in this file when using this code anywhere
    https://github.com/DelTa-B/hook-matching/
@@ -43,74 +44,23 @@
 #define NOTE_SENSIBLE NOTE_SEPTIEME
 #define NOTE_OCTAVE 7;
 
-#define FORCE_SHARP 1
-#define FORCE_FLAT 2
-#define FORCE_NATURAL 4
+extern float LA4_REF;
 
-static float LA4_REF = 440.0;
 typedef uint8_t note_duration;  // 24 for a black, 48 for a white, handles triolets
 typedef uint8_t note;           // 0 for C, 1 for D, etc.
 
-/** scale is a description of the rule on which the note walk.
-   Definition is made taking the C major scale as reference, which is what you get by only playing white notes on a piano
-*/
 
-struct scale {
-  uint8_t sharps;        // binary map from right to left, starting from do: 1 if sharp
-  uint8_t flats;         // binary map from right to left, starting from do: 1 if flat
-  note note_base;        // the NOTE_something telling which note is the Tonic
-  const char *display_name;    // a fancy name to display
-};
-
-typedef struct hook2 *hook2_p;
-struct hook2_placed {
+struct note_info {
   int8_t degreeOffset;
-  hook2_p *recur_hook;
-};
-
-
-struct hook2_block {
+  uint8_t octaveOffset;
   note_duration duration;
-  size_t num;
-  struct hook2_placed placed[];
-};
-struct hook2 {
-  size_t num;
-  struct hook2_block blocks[];
+  effects flags;
 };
 
-struct hookpart {
-  int8_t degreeOffset;
-  note_duration duration;
-};
-
-struct scale_hook {
-  size_t number;
-  struct hookpart part [];
-};
-
-struct contextual_scale_hook {
-
-  uint8_t octave;
-  uint8_t note;
-  struct scale_hook *hook;
-};
-float getFrequency(const int8_t degree, const uint8_t octave,  struct scale const *g);
 
 
-struct sheet {
-  struct scale * scale;
-  uint16_t bpm; // may ranges from 96 to 480
-  note_duration bpm_unit;
-  uint8_t top;    // number of time unit per "mesure"
-  uint8_t bottom; // if it's 4, blacks are one time unit, if it's 2, white ahre 1 time unit, if it's 8 "croches" are 1 time unit etc
-};
+
 
 typedef int (*PLAY_CB)(void * context, float freq, uint32_t duration);
 
-struct default_play_context {
-  Tone voice;
-};
-int default_play_cb(void * context, float freq, uint32_t duration);
-
-#endif
+#endif // HM_DEFINITONS_HPP
