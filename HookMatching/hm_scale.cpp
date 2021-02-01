@@ -113,7 +113,7 @@ bool DiatonicScale::checkScaleInitParam(const char *c) {
     return false;
   if (c[1] != '#' && c[1] != 'b')
     return false;
-  if (c[2] != 'm' && c[1] != 'M' && c[1] < 'A' && c[1] > 'C') // either 1st note or major/minor
+  if (c[2] != 'm' && c[1] != 'M' && c[1] < 'A' && c[1] > 'C') // either 1st note or M/m for major/minor
     return false;
   return true;
 }

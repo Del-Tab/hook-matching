@@ -62,7 +62,8 @@ void interruptLowCHA() {
 
 
 // fa est #, note de base = E
-Scale * mi_mineur = new DiatonicScale("1#m");
+// same as "1#m"
+Scale * mi_mineur = new DiatonicScale("1#E");
 
 // E minor scale, 120 bpm (unit = halfbeat), 3/2 time signature
 // gamme de mi mineur, 120 bpm (unité de battement = blanche), rythme = 3/2 (3 temps par mesure, unité dde temps = blanche)
@@ -308,7 +309,8 @@ void(* resetFunc) (void) = 0;
 void loop() {
   if (state == 0) {
     if (rotaryEncoder != 0) {
-      Serial.print("+");
+      if (rotaryEncoder > 0)
+        Serial.print("+");
       Serial.print(rotaryEncoder);
       Serial.print("\t");
       Serial.print(LA4_REF);
