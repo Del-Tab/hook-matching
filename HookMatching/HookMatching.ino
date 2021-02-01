@@ -61,16 +61,16 @@ void interruptLowCHA() {
 
 
 // TODO have a scale class interface and implementation, that will allow generator, and customized methods (currently we only support diatonic scales)
-struct scale GAMME_Do = {0, 0, NOTE_DO, "Do majeur"};
+struct scaleDeprecated GAMME_Do = {0, 0, NOTE_DO, "Do majeur"};
 
 // fa est #, note de base = mi
-struct scale miMineur = {B1000, 0, NOTE_MI, "mi mineur"};
+struct scaleDeprecated miMineur = {B1000, 0, NOTE_MI, "mi mineur"};
 
 // fa est diese
-struct scale solMajeur = {B1000, 0, NOTE_SOL, "sol majeur"};
+struct scaleDeprecated solMajeur = {B1000, 0, NOTE_SOL, "sol majeur"};
 
 
-struct scale miMajeur = {B11011, 0, NOTE_MI, "mi majeur"};
+struct scaleDeprecated miMajeur = {B11011, 0, NOTE_MI, "mi majeur"};
 
 // E minor scale, 120 bpm (unit = halfbeat), 3/2 time signature
 // gamme de mi mineur, 120 bpm (unité de battement = blanche), rythme = 3/2 (3 temps par mesure, unité dde temps = blanche)

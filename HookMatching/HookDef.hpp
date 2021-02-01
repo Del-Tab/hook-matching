@@ -1,8 +1,9 @@
 #ifndef HM_HOOKDEF_HPP
 #define HM_HOOKDEF_HPP
 #include <Arduino.h>
-#include "hm_definitions.hpp"
+
 #include "hm_music.hpp"
+#include "hm_scale.hpp"
 
 #ifndef MAX_DEPTH
 # define MAX_DEPTH 16
@@ -11,19 +12,15 @@
 # define HM_PULSE_STEP .075
 #endif
 
-struct note_info {
-  int8_t degreeOffset;
-  uint8_t octaveOffset;
-  note_duration duration;
-  effects flags;
-};
+
 
 class PlayingContext {
   private:
     struct sheet *sheetInfo;
-    struct scale *scaleInfo;
+    struct scaleDeprecated *scaleInfoDeprecated;
+    //Scale *scaleInfo;
   public:
-    PlayingContext(struct sheet *_sheetInfo) : sheetInfo(_sheetInfo), scaleInfo(_sheetInfo->default_scale) { };
+    PlayingContext(struct sheet *_sheetInfo) : sheetInfo(_sheetInfo), scaleInfoDeprecated(_sheetInfo->default_scale) { };
     struct sheet *getSheetInfo() {
       return sheetInfo;
     }
@@ -32,26 +29,26 @@ class PlayingContext {
       transpose = 0;
 
       if (ni.flags & NOTE_FORCE_SHARP) { 
-        if (!isSharp(scaleInfo, ni.degreeOffset))
+        if (!isSharp(scaleInfoDeprecated, ni.degreeOffset))
           ++transpose;
-        if (isFlat(scaleInfo, ni.degreeOffset))
+        if (isFlat(scaleInfoDeprecated, ni.degreeOffset))
           ++transpose;
       }
 
       if (ni.flags & NOTE_FORCE_FLAT) {
-        if (!isFlat(scaleInfo, ni.degreeOffset))
+        if (!isFlat(scaleInfoDeprecated, ni.degreeOffset))
           --transpose;
-        if (isSharp(scaleInfo, ni.degreeOffset))
+        if (isSharp(scaleInfoDeprecated, ni.degreeOffset))
           --transpose;
       }
       
       if ((ni.flags & NOTE_FORCE_NATURAL)) {
-        if (isFlat(scaleInfo, ni.degreeOffset))
+        if (isFlat(scaleInfoDeprecated, ni.degreeOffset))
           ++transpose;
-        if (isSharp(scaleInfo, ni.degreeOffset))
+        if (isSharp(scaleInfoDeprecated, ni.degreeOffset))
           --transpose;
       }
-      return getFrequency(ni.degreeOffset, 5 + ni.octaveOffset, scaleInfo, transpose);
+      return getFrequency(ni.degreeOffset, 5 + ni.octaveOffset, scaleInfoDeprecated, transpose);
     }
 
     uint32_t getDurationMillis(struct note_info ni) {

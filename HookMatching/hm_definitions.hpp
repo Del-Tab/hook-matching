@@ -54,21 +54,26 @@ typedef uint8_t note;           // 0 for C, 1 for D, etc.
    Definition is made taking the C major scale as reference, which is what you get by only playing white notes on a piano
 */
 // TODO ref1 scale class
-struct scale {
+struct scaleDeprecated {
   uint8_t sharps;        // binary map from right to left, starting from do: 1 if sharp
   uint8_t flats;         // binary map from right to left, starting from do: 1 if flat
   note note_base;        // the NOTE_something telling which note is the Tonic
   const char *display_name;    // a fancy name to display
 };
 
-
+struct note_info {
+  int8_t degreeOffset;
+  uint8_t octaveOffset;
+  note_duration duration;
+  effects flags;
+};
 // TODO ref1
-float getFrequency(const int8_t degree, const uint8_t octave,  struct scale const *g);
+float getFrequency(const int8_t degree, const uint8_t octave,  struct scaleDeprecated const *g);
 
 
 struct sheet {
   // TODO ref1
-  struct scale * default_scale;
+  struct scaleDeprecated * default_scale;
   uint16_t bpm; // most of the time ranges from 96 to 480, just don't chose 0
   note_duration bpm_unit; //24 when bpm is expressed on the quarter note, 48 on the half note
   uint8_t top;    // number of time unit per "mesure"
