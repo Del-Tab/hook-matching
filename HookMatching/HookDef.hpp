@@ -17,7 +17,6 @@
 class PlayingContext {
   private:
     struct sheet *sheetInfo;
-    //struct scaleDeprecated *scaleInfoDeprecated;
     Scale *scaleInfo;
   public:
     PlayingContext(struct sheet *_sheetInfo) : sheetInfo(_sheetInfo), scaleInfo(_sheetInfo->default_scale) { };

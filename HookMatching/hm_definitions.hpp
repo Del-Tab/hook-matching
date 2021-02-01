@@ -50,25 +50,13 @@ typedef uint8_t note_duration;  // 24 for a black, 48 for a white, handles triol
 typedef uint8_t note;           // 0 for C, 1 for D, etc.
 
 
-/** scale is a description of the rule on which the note walks.
-   Definition is made taking the C major scale as reference, which is what you get by only playing white notes on a piano
-*/
-// TODO ref1 scale class
-struct scaleDeprecated {
-  uint8_t sharps;        // binary map from right to left, starting from do: 1 if sharp
-  uint8_t flats;         // binary map from right to left, starting from do: 1 if flat
-  note note_base;        // the NOTE_something telling which note is the Tonic
-  const char *display_name;    // a fancy name to display
-};
-
 struct note_info {
   int8_t degreeOffset;
   uint8_t octaveOffset;
   note_duration duration;
   effects flags;
 };
-// TODO ref1
-float getFrequency(const int8_t degree, const uint8_t octave,  struct scaleDeprecated const *g);
+
 
 
 
