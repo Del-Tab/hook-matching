@@ -1,5 +1,5 @@
-#ifndef HM_HOOKDEF_HPP
-#define HM_HOOKDEF_HPP
+#ifndef HM_PLAYER_HPP
+#define HM_PLAYER_HPP
 #include <Arduino.h>
 
 #include "hm_maths.hpp"
@@ -227,4 +227,4 @@ class led_metronome : public player {
       }
     }
 };
-#endif // HM_HOOKDEF_HPP
+#endif // HM_PLAYER_HPP
