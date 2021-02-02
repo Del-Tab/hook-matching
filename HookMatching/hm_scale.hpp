@@ -17,10 +17,9 @@ class Scale {
 
 class DiatonicScale : public Scale {
   private:
-    uint8_t sharps;        // binary map from right to left, starting from do: 1 if sharp
-    uint8_t flats;         // binary map from right to left, starting from do: 1 if flat
-    note note_base;        // the NOTE_something telling which note is the Tonic
-    uint8_t octave;        // 0 based octave offset
+    // TODO ref3 hide also private methods inside a class instead of a struct
+    struct impl;        // things to be hidden go here
+    impl* pimpl_;       // opaque pointer to forward-declared class 
     int8_t getAccidentCorrection(struct note_info ni);
     bool isSharp (byte degre);
     bool isFlat (byte degre);
