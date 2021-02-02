@@ -6,11 +6,11 @@
 
 // TODO ref2 put it in a sheet class
 struct sheet_dep {
-  Scale *default_scale;
-  uint16_t bpm; // most of the time ranges from 96 to 480, just don't chose 0
-  note_duration bpm_unit; //24 when bpm is expressed on the quarter note, 48 on the half note
-  uint8_t top;    // number of time unit per "mesure"
-  note_duration bottom; // if it's 4, blacks are one time unit, if it's 2, white ahre 1 time unit, if it's 8 "croches" are 1 time unit etc
+  scale *default_scale;
+  uint16_t bpm;           // most of the time ranges from 96 to 480, but you're free, just don't chose 0, and consider we are millisecond precise only
+  note_duration bpm_unit; // 24 when bpm is expressed on the quarter note, 48 on the half note, etc
+  uint8_t top;            // number of time unit per case
+  note_duration bottom;   // if it's 4, quarter notes are one time unit, if it's 2, half notes are 1 time unit, if it's 8 eights are 1 time unit etc
 };
 /*
    modulo that handles correctly negative numbers (only returns positives values)

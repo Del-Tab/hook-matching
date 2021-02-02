@@ -7,8 +7,8 @@
    https://github.com/DelTa-B/hook-matching/
    I would be glad if you give this link when you take part of this file :)
 */
-//typedef uint8_t effects;
-#define effects uint8_t
+
+using effects = uint8_t;
 #define NOTE_IS_SILENCE 1
 #define NOTE_STICKS_TO_NEXT 2
 #define NOTE_FORCE_SHARP 4
@@ -46,8 +46,8 @@
 
 extern float LA4_REF;
 
-typedef uint8_t note_duration;  // 24 for a black, 48 for a white, handles triolets
-typedef uint8_t note;           // 0 for C, 1 for D, etc.
+using note_duration = uint8_t;  // 24 for a black, 48 for a white, handles triolets
+using note_t = uint8_t;         // 0 for C, 1 for D, etc.
 
 
 struct note_info {
@@ -58,7 +58,6 @@ struct note_info {
 };
 
 
-
-typedef int (*PLAY_CB)(void * context, float freq, uint32_t duration);
+//typedef int (*PLAY_CB)(void * context, float freq, uint32_t duration);
 
 #endif // HM_DEFINITONS_HPP

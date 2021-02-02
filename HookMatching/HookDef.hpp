@@ -14,12 +14,12 @@
 
 
 
-class PlayingContext {
+class playing_context {
   private:
     struct sheet_dep *sheetInfo;
-    Scale *scaleInfo;
+    scale *scaleInfo;
   public:
-    PlayingContext(struct sheet_dep *_sheetInfo) : sheetInfo(_sheetInfo), scaleInfo(_sheetInfo->default_scale) { };
+    playing_context(struct sheet_dep *_sheetInfo) : sheetInfo(_sheetInfo), scaleInfo(_sheetInfo->default_scale) { };
     struct sheet_dep *getSheetInfo() {
       return sheetInfo;
     }
@@ -33,7 +33,7 @@ class PlayingContext {
 
 };
 
-class Playable {
+class playable {
   private:
     int nb_usage;
   public:
@@ -43,8 +43,8 @@ class Playable {
     virtual uint8_t getMaxDepth() = 0;
 
     // linked to the memory usage:
-    Playable(): nb_usage(1) {}; // we suppose it's used once when allocated . call unuse to free
-    Playable *useAgain() {
+    playable(): nb_usage(1) {}; // we suppose it's used once when allocated . call unuse to free
+    playable *useAgain() {
       ++nb_usage;
       return this;
     }
@@ -53,21 +53,21 @@ class Playable {
     }
 };
 
-class Player {
+class player {
   protected:
-    PlayingContext *pc;
-    Playable *voice;
+    playing_context *pc;
+    playable *voice;
     uint8_t coordinates[MAX_DEPTH];
     unsigned long nextTime;
     boolean isReady(unsigned long millis) {
       return nextTime <= millis;
     }
   public:
-    Player(PlayingContext *a_pc, Playable *a_voice) : pc(a_pc), voice(a_voice->useAgain()), coordinates{0}, nextTime(0) { }
+    player(playing_context *a_pc, playable *a_voice) : pc(a_pc), voice(a_voice->useAgain()), coordinates{0}, nextTime(0) { }
     boolean hasFinished() {
       return !voice->hasMore(coordinates, MAX_DEPTH, 0) && isReady(millis());
     }
-    void setVoice(Playable *n_voice) {
+    void setVoice(playable *n_voice) {
       if (voice != NULL)
         voice->unuse();
       voice = n_voice->useAgain();
@@ -82,11 +82,11 @@ class Player {
 /*
 
 */
-class TonePlayer : public Player {
+class tone_player : public player {
   private :
     Tone *toneVoice;
   public:
-    TonePlayer(PlayingContext *a_pc, uint8_t a_tonePin, Playable *a_voice) : Player(a_pc, a_voice), toneVoice(new Tone()) {
+    tone_player(playing_context *a_pc, uint8_t a_tonePin, playable *a_voice) : player(a_pc, a_voice), toneVoice(new Tone()) {
       toneVoice->begin(a_tonePin);
     };
     void playIfReady(unsigned long currentMillis) {
@@ -113,9 +113,9 @@ class TonePlayer : public Player {
 /**
    the null playable, play nothing at all (used when a voice is not initialized and you want to call methods without crashing)
 */
-class Nothing : public Playable {
+class nothing : public playable {
   public:
-    Nothing() { }
+    nothing() { }
     boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth) {
       return false;
     }
@@ -127,19 +127,19 @@ class Nothing : public Playable {
     }
 };
 
-static Playable *THE_NOTHING = new Nothing();
+static playable *THE_NOTHING = new nothing();
 
 
 
 /**
-   The simplest Playable: one single playable stuff that defines a duration, callable with offset and octave
+   The simplest playable: one single playable stuff that defines a duration, callable with offset and octave
 */
-class Note : public Playable {
+class note : public playable {
   private:
     note_duration duration;
 
   public:
-    Note(note_duration a_duration): duration(a_duration) { }
+    note(note_duration a_duration): duration(a_duration) { }
     boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
     struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
     uint8_t getMaxDepth();
@@ -150,13 +150,13 @@ class Note : public Playable {
 /**
    A hook that repeats the inner Hook N times, or every time if N is 0
 */
-class RepeatHook : public Playable {
+class repeat_hook : public playable {
   private:
-    Playable *p;
+    playable *p;
     int nb_cycles;
-    ~RepeatHook();
+    ~repeat_hook();
   public:
-    RepeatHook(Playable *a_p, int a_nb_cycles = 0) : p(a_p->useAgain()), nb_cycles(a_nb_cycles) { }
+    repeat_hook(playable *a_p, int a_nb_cycles = 0) : p(a_p->useAgain()), nb_cycles(a_nb_cycles) { }
 
     boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
     struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
@@ -166,38 +166,38 @@ class RepeatHook : public Playable {
 /**
    A hook that is a list of PlayableChild_s with no relation whatsoever.They are played one after the other
 */
-class ListHook : public Playable {
+class list_hook : public playable {
   private:
     struct PlayableChild {
       int8_t degreeOffset;
       effects flags;
-      Playable *p;
+      playable *p;
     };
     uint8_t capacity; // max 255, todo do better with capacity, maybe use a linked list
     uint8_t number;
     uint8_t maxDepth;
     struct PlayableChild *list;
-    ~ListHook();
+    ~list_hook();
   public:
-    ListHook(uint16_t a_capacity);
+    list_hook(uint16_t a_capacity);
 
-    ListHook *add(Playable *p, int8_t degreeOffset = 0, effects flags = 0);
+    list_hook *add(playable *p, int8_t degreeOffset = 0, effects flags = 0);
     boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
     struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
     uint8_t getMaxDepth();
 };
 
 
-class LedMetronome : public Player {
+class led_metronome : public player {
   private:
     unsigned int pulseLed;
     int brightness;
   public:
-    LedMetronome(PlayingContext *_pc, unsigned int _pulseLed) : Player(_pc, THE_NOTHING), pulseLed(_pulseLed), brightness(0) {
+    led_metronome(playing_context *_pc, unsigned int _pulseLed) : player(_pc, THE_NOTHING), pulseLed(_pulseLed), brightness(0) {
       pinMode(pulseLed, OUTPUT);
       uint8_t beatNoteDuration =  24 * 4 / pc->getSheetInfo()->bottom;
-      Playable *beatNote = new Note(beatNoteDuration);
-      ListHook *oneMeasureBeat =  new ListHook(pc->getSheetInfo()->top);
+      playable *beatNote = new note(beatNoteDuration);
+      list_hook *oneMeasureBeat =  new list_hook(pc->getSheetInfo()->top);
       for (int i = 0; i <  pc->getSheetInfo()->top; ++i) {
         if (i == 0)
           oneMeasureBeat->add(beatNote, 15);
@@ -206,7 +206,7 @@ class LedMetronome : public Player {
         else
           oneMeasureBeat->add(beatNote, 2);
       }
-      setVoice(new RepeatHook(oneMeasureBeat));
+      setVoice(new repeat_hook(oneMeasureBeat));
       oneMeasureBeat->unuse();
     }
     void playIfReady(unsigned long currentMillis) {

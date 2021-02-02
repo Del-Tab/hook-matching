@@ -4,7 +4,7 @@
 #include "hm_definitions.hpp"
 
 
-class Scale {
+class scale {
   protected:
     char display_name[4];
   public:
@@ -15,7 +15,7 @@ class Scale {
 };
 
 
-class diatonic_scale : public Scale {
+class diatonic_scale : public scale {
   private:
     // TODO ref3 hide also private methods inside a class instead of a struct
     class impl;        // things to be hidden go here
@@ -25,10 +25,11 @@ class diatonic_scale : public Scale {
         -then # if accidents are sharps, b if they are flats,
         -then M for major, m for minor or the base note
       minorE -> "1#m" or "1#E"
-      majorC -> "0#M" or "0bM" (or "0#C" or "0bC") are valid
-      minorA -> "0#m" or "0bm" (or "0#A" or "0bA") are valid
+      majorF -> "1bM" of "1bF"
+      majorC -> "0#M" or "0bM" (or "0#C" or "0bC")
+      minorA -> "0#m" or "0bm" (or "0#A" or "0bA")
     */
-    static bool checkScaleInitParam(const char *c);
+    static bool checkScaleInitParam(const char *desc);
     diatonic_scale(const char *desc);
     float get_frequency(struct note_info ni);
 };

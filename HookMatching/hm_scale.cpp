@@ -2,7 +2,7 @@
 #include "hm_definitions.hpp"
 #include "hm_maths.hpp"
 
-static note sharp_refs[] = {NOTE_FA, NOTE_DO, NOTE_SOL, NOTE_RE, NOTE_LA, NOTE_MI, NOTE_SI};
+static note_t sharp_refs[] = {NOTE_FA, NOTE_DO, NOTE_SOL, NOTE_RE, NOTE_LA, NOTE_MI, NOTE_SI};
 static const uint8_t diatonic_offsets[] = {0, 2, 4, 5, 7, 9, 11};
 static const uint8_t scaleSize = sizeof diatonic_offsets / sizeof diatonic_offsets[0];
 
@@ -12,7 +12,7 @@ class diatonic_scale::impl {
     impl(diatonic_scale *self, const char *desc);
     uint8_t sharps;        // binary map from right to left, starting from do: 1 if sharp
     uint8_t flats;         // binary map from right to left, starting from do: 1 if flat
-    note note_base;        // the NOTE_something telling which note is the Tonic
+    note_t note_base;        // the NOTE_something telling which note is the Tonic
     uint8_t octave;        // 0 based octave offset
     int8_t getAccidentCorrection(const diatonic_scale *self, struct note_info ni);
     bool isSharp (const diatonic_scale *self, byte degre);
@@ -47,7 +47,7 @@ diatonic_scale::impl::impl(diatonic_scale *self, const char *desc) {
     isMinor = true;
     note_base = hm_mod(note_base - 2 , 7);
   } else if (desc[2] != 'M') {
-    note chosen_note = hm_mod(desc[2] - 'C', 7);
+    note_t chosen_note = hm_mod(desc[2] - 'C', 7);
     if (chosen_note == hm_mod(note_base - 2, 7))
       isMinor = true;
     note_base = chosen_note;
