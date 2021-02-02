@@ -1,6 +1,6 @@
 #include <Arduino.h>
 
-#include "hm_music.hpp"
+#include "hm_maths.hpp"
 
 int hm_mod(int a, int b)
 {
@@ -19,8 +19,8 @@ int hm_div(int a, int b)
     return (int)ret - 1;
   return (int)ret;
 }
-
-uint32_t getNoteLengthMillis(note_duration nd, const struct sheet & p) {
+// TODO ref2 put it in a sheet class
+uint32_t getNoteLengthMillis(note_duration nd, const struct sheet_dep & p) {
   float base_duration = 60000.0 / (p.bpm_unit * p.bpm);
   return nd * base_duration;
 }

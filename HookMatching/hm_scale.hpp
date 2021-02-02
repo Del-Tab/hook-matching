@@ -3,15 +3,10 @@
 #include <Arduino.h>
 #include "hm_definitions.hpp"
 
-static note sharp_refs[] = {NOTE_FA, NOTE_DO, NOTE_SOL, NOTE_RE, NOTE_LA, NOTE_MI, NOTE_SI};
-static const uint8_t diatonic_offsets[] = {0, 2, 4, 5, 7, 9, 11};
-static const uint8_t scaleSize = sizeof diatonic_offsets / sizeof diatonic_offsets[0];
 
 class Scale {
-
   protected:
     char display_name[4];
-
   public:
     virtual float get_frequency(struct note_info ni) = 0;
     char * getName() {
@@ -32,12 +27,15 @@ class DiatonicScale : public Scale {
     bool isNatural (byte degre);
     uint16_t getMidiNote(const int8_t degree, const uint8_t octave);
   public:
-    /* the number of accident, # if accidents are sharps, b if they are flats, then M for major, m for minor
-      doM -> "0#M" or "0bM" are valid
-      lam -> "0#m" or "0bm" are valid
+    /*  -the number of accident on 1 char,     
+     *  -then # if accidents are sharps, b if they are flats, 
+     *  -then M for major, m for minor or the base note
+      minorE -> "1#m" or "1#E"
+      majorC -> "0#M" or "0bM" (or "0#C" or "0bC") are valid
+      minorA -> "0#m" or "0bm" (or "0#A" or "0bA") are valid
     */
     static bool checkScaleInitParam(const char *c);
-    DiatonicScale(const char *c);
+    DiatonicScale(const char *desc);
     float get_frequency(struct note_info ni);
 };
 

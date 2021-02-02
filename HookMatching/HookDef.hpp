@@ -2,7 +2,7 @@
 #define HM_HOOKDEF_HPP
 #include <Arduino.h>
 
-#include "hm_music.hpp"
+#include "hm_maths.hpp"
 #include "hm_scale.hpp"
 
 #ifndef MAX_DEPTH
@@ -16,11 +16,11 @@
 
 class PlayingContext {
   private:
-    struct sheet *sheetInfo;
+    struct sheet_dep *sheetInfo;
     Scale *scaleInfo;
   public:
-    PlayingContext(struct sheet *_sheetInfo) : sheetInfo(_sheetInfo), scaleInfo(_sheetInfo->default_scale) { };
-    struct sheet *getSheetInfo() {
+    PlayingContext(struct sheet_dep *_sheetInfo) : sheetInfo(_sheetInfo), scaleInfo(_sheetInfo->default_scale) { };
+    struct sheet_dep *getSheetInfo() {
       return sheetInfo;
     }
     float get_frequency(struct note_info ni) {
@@ -63,14 +63,14 @@ class Player {
       return nextTime <= millis;
     }
   public:
-    Player(PlayingContext *_pc, Playable *_voice) : pc(_pc), voice(_voice->useAgain()), coordinates{0}, nextTime(0) { }
+    Player(PlayingContext *a_pc, Playable *a_voice) : pc(a_pc), voice(a_voice->useAgain()), coordinates{0}, nextTime(0) { }
     boolean hasFinished() {
       return !voice->hasMore(coordinates, MAX_DEPTH, 0) && isReady(millis());
     }
-    void setVoice(Playable *_voice) {
+    void setVoice(Playable *n_voice) {
       if (voice != NULL)
         voice->unuse();
-      voice = _voice->useAgain();
+      voice = n_voice->useAgain();
       // reset coordinates
       memset(coordinates, 0, sizeof coordinates);
     }
@@ -86,11 +86,11 @@ class TonePlayer : public Player {
   private :
     Tone *toneVoice;
   public:
-    TonePlayer(PlayingContext *_pc, uint8_t tonePin, Playable *_voice) : Player(_pc, _voice), toneVoice(new Tone()) {
-      toneVoice->begin(tonePin);
+    TonePlayer(PlayingContext *a_pc, uint8_t a_tonePin, Playable *a_voice) : Player(a_pc, a_voice), toneVoice(new Tone()) {
+      toneVoice->begin(a_tonePin);
     };
     void playIfReady(unsigned long currentMillis) {
-      if (this->isReady(currentMillis)) {
+      if (isReady(currentMillis)) {
         if (voice->hasMore(coordinates, MAX_DEPTH, 0)) {
           note_info ni = voice->getOne(coordinates, MAX_DEPTH, 0);
           float freq = pc->get_frequency(ni);
@@ -139,7 +139,7 @@ class Note : public Playable {
     note_duration duration;
 
   public:
-    Note(note_duration _duration): duration(_duration) { }
+    Note(note_duration a_duration): duration(a_duration) { }
     boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
     struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
     uint8_t getMaxDepth();
@@ -156,7 +156,7 @@ class RepeatHook : public Playable {
     int nb_cycles;
     ~RepeatHook();
   public:
-    RepeatHook(Playable *_p, int _nb_cycles = 0) : p(_p->useAgain()), nb_cycles(_nb_cycles) { }
+    RepeatHook(Playable *a_p, int a_nb_cycles = 0) : p(a_p->useAgain()), nb_cycles(a_nb_cycles) { }
 
     boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
     struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
@@ -179,15 +179,9 @@ class ListHook : public Playable {
     struct PlayableChild *list;
     ~ListHook();
   public:
-    ListHook(uint16_t _capacity);
+    ListHook(uint16_t a_capacity);
 
-    ListHook *add(Playable *p) {
-      return add(p, 0, 0);
-    }
-    ListHook *add(Playable *p, int8_t degreeOffset) {
-      return add(p, degreeOffset, 0);
-    }
-    ListHook *add(Playable *p, int8_t degreeOffset, effects flags);
+    ListHook *add(Playable *p, int8_t degreeOffset = 0, effects flags = 0);
     boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
     struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
     uint8_t getMaxDepth();

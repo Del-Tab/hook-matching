@@ -1,16 +1,20 @@
 #include "hm_scale.hpp"
 #include "hm_definitions.hpp"
-#include "hm_music.hpp"
+#include "hm_maths.hpp"
+
+static note sharp_refs[] = {NOTE_FA, NOTE_DO, NOTE_SOL, NOTE_RE, NOTE_LA, NOTE_MI, NOTE_SI};
+static const uint8_t diatonic_offsets[] = {0, 2, 4, 5, 7, 9, 11};
+static const uint8_t scaleSize = sizeof diatonic_offsets / sizeof diatonic_offsets[0];
 
 /*BEGIN DiatonicScale implementation*/
-DiatonicScale::DiatonicScale(const char *c) {
+DiatonicScale::DiatonicScale(const char *desc) {
   octave = 5;
   sharps = flats = 0;
-  uint8_t num = c[0] - '0';
+  uint8_t num = desc[0] - '0';
   if (num == 0) {
     note_base = NOTE_DO;
   } else {
-    if (c[1] == '#') {
+    if (desc[1] == '#') {
       for (uint8_t i = 0; i < num; ++i) {
         sharps |= 1 << sharp_refs[i];
       }
@@ -23,11 +27,11 @@ DiatonicScale::DiatonicScale(const char *c) {
     }
   }
   bool isMinor = false;
-  if (c[2] == 'm') {
+  if (desc[2] == 'm') {
     isMinor = true;
     note_base = hm_mod(note_base - 2 , 7);
-  } else if (c[2] != 'M') {
-    note chosen_note = hm_mod(c[2] - 'C', 7);
+  } else if (desc[2] != 'M') {
+    note chosen_note = hm_mod(desc[2] - 'C', 7);
     if (chosen_note == hm_mod(note_base - 2, 7))
       isMinor = true;
     note_base = chosen_note;

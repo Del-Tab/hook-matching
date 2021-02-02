@@ -3,7 +3,9 @@
 
 #include "hm_definitions.hpp"
 #include "hm_scale.hpp"
-struct sheet {
+
+// TODO ref2 put it in a sheet class
+struct sheet_dep {
   Scale *default_scale;
   uint16_t bpm; // most of the time ranges from 96 to 480, just don't chose 0
   note_duration bpm_unit; //24 when bpm is expressed on the quarter note, 48 on the half note
@@ -22,6 +24,6 @@ int hm_mod(int a, int b);
 */
 int hm_div(int a, int b);
 
-uint32_t getNoteLengthMillis(note_duration nd, const struct sheet & p);
+uint32_t getNoteLengthMillis(note_duration nd, const struct sheet_dep & p);
 
 #endif // HM_MUSIC_HPP

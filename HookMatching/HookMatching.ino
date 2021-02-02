@@ -1,5 +1,5 @@
 
-#include "hm_music.hpp"
+#include "hm_maths.hpp"
 #include "HookDef.hpp"
 #include <avr/sleep.h>
 #include "hm_scale.hpp"
@@ -63,12 +63,12 @@ void interruptLowCHA() {
 
 // fa est #, note de base = E
 // same as "1#m"
-Scale * mi_mineur = new DiatonicScale("1#E");
+Scale *mi_mineur = new DiatonicScale("1#E");
 
 // E minor scale, 120 bpm (unit = halfbeat), 3/2 time signature
 // gamme de mi mineur, 120 bpm (unité de battement = blanche), rythme = 3/2 (3 temps par mesure, unité dde temps = blanche)
 // TODO have a class for this, maybe the calling code will be easier.
-struct sheet tourdion = {mi_mineur, 120, 48, 3, 2};
+struct sheet_dep tourdion = {mi_mineur, 120, 48, 3, 2};
 
 PlayingContext * pc = new PlayingContext(&tourdion);
 

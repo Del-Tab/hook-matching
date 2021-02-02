@@ -59,8 +59,6 @@ struct note_info {
 
 
 
-
-
 typedef int (*PLAY_CB)(void * context, float freq, uint32_t duration);
 
 #endif // HM_DEFINITONS_HPP
