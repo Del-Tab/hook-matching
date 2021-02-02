@@ -63,7 +63,7 @@ void interruptLowCHA() {
 
 // fa est #, note de base = E
 // same as "1#m"
-Scale *mi_mineur = new DiatonicScale("1#E");
+Scale *mi_mineur = new diatonic_scale("1#E");
 
 // E minor scale, 120 bpm (unit = halfbeat), 3/2 time signature
 // gamme de mi mineur, 120 bpm (unité de battement = blanche), rythme = 3/2 (3 temps par mesure, unité dde temps = blanche)
@@ -281,10 +281,10 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(CHA), interruptLowCHA, LOW);
   Serial.begin(9600);
   // test Scale constructor
-  Scale *s1 = new DiatonicScale("3#M");
-  Scale *s2 = new DiatonicScale("3#m");
-  Scale *s3 = new DiatonicScale("2bM");
-  Scale *s4 = new DiatonicScale("2bm");
+  Scale *s1 = new diatonic_scale("3#M");
+  Scale *s2 = new diatonic_scale("3#m");
+  Scale *s3 = new diatonic_scale("2bM");
+  Scale *s4 = new diatonic_scale("2bm");
   Serial.println("Scales:");
   Serial.println(s1->getName());
   Serial.println(s2->getName());

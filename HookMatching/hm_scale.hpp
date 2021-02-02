@@ -15,26 +15,21 @@ class Scale {
 };
 
 
-class DiatonicScale : public Scale {
+class diatonic_scale : public Scale {
   private:
     // TODO ref3 hide also private methods inside a class instead of a struct
-    struct impl;        // things to be hidden go here
-    impl* pimpl_;       // opaque pointer to forward-declared class 
-    int8_t getAccidentCorrection(struct note_info ni);
-    bool isSharp (byte degre);
-    bool isFlat (byte degre);
-    bool isNatural (byte degre);
-    uint16_t getMidiNote(const int8_t degree, const uint8_t octave);
+    class impl;        // things to be hidden go here
+    impl* pimpl_;      // opaque pointer to forward-declared class
   public:
-    /*  -the number of accident on 1 char,     
-     *  -then # if accidents are sharps, b if they are flats, 
-     *  -then M for major, m for minor or the base note
+    /*  -the number of accident on 1 char,
+        -then # if accidents are sharps, b if they are flats,
+        -then M for major, m for minor or the base note
       minorE -> "1#m" or "1#E"
       majorC -> "0#M" or "0bM" (or "0#C" or "0bC") are valid
       minorA -> "0#m" or "0bm" (or "0#A" or "0bA") are valid
     */
     static bool checkScaleInitParam(const char *c);
-    DiatonicScale(const char *desc);
+    diatonic_scale(const char *desc);
     float get_frequency(struct note_info ni);
 };
 
