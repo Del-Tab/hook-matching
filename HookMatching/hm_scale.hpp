@@ -1,6 +1,5 @@
 #ifndef HM_SCALE_HPP
 #define HM_SCALE_HPP
-#include <Arduino.h>
 #include "hm_definitions.hpp"
 
 
@@ -13,7 +12,15 @@ class scale {
       return display_name;
     }
 };
-
+// TODO ref2 put it in a sheet class
+struct sheet_dep {
+  scale *default_scale;
+  uint16_t bpm;           // most of the time ranges from 96 to 480, but you're free, just don't chose 0, and consider we are millisecond precise only
+  note_duration bpm_unit; // 24 when bpm is expressed on the quarter note, 48 on the half note, etc
+  uint8_t top;            // number of time unit per case
+  note_duration bottom;   // if it's 4, quarter notes are one time unit, if it's 2, half notes are 1 time unit, if it's 8 eights are 1 time unit etc
+};
+uint32_t getNoteLengthMillis(note_duration nd, const struct sheet_dep & p);
 
 class diatonic_scale : public scale {
   private:

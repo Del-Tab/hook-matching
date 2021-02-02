@@ -1,6 +1,7 @@
 #include "hm_scale.hpp"
 #include "hm_definitions.hpp"
 #include "hm_maths.hpp"
+#include <Arduino.h>
 
 static note_t sharp_refs[] = {NOTE_FA, NOTE_DO, NOTE_SOL, NOTE_RE, NOTE_LA, NOTE_MI, NOTE_SI};
 static const uint8_t diatonic_offsets[] = {0, 2, 4, 5, 7, 9, 11};
@@ -146,3 +147,9 @@ uint16_t diatonic_scale::impl::getMidiNote(const diatonic_scale *self, const hm_
 
 
 /*END diatonic_scale implementation*/
+
+// TODO ref2 put it in a sheet class
+uint32_t getNoteLengthMillis(note_duration nd, const struct sheet_dep & p) {
+  float base_duration = 60000.0 / (p.bpm_unit * p.bpm);
+  return nd * base_duration;
+}

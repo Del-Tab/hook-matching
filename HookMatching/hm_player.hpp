@@ -1,6 +1,6 @@
 #ifndef HM_PLAYER_HPP
 #define HM_PLAYER_HPP
-#include <Arduino.h>
+
 
 #include "hm_maths.hpp"
 #include "hm_scale.hpp"
@@ -39,8 +39,8 @@ class playable {
     int nb_usage;
   public:
     //virtual int getIteratorInitCtx() = 0;
-    virtual boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth) = 0;
-    virtual struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth)  = 0;
+    virtual boolean hasMore(uint8_t *hc, uint8_t depth) = 0;
+    virtual struct note_info getOne(uint8_t *hc, uint8_t depth)  = 0;
     virtual uint8_t getMaxDepth() = 0;
 
     // linked to the memory usage:
@@ -66,7 +66,7 @@ class player {
   public:
     player(playing_context *a_pc, playable *a_voice) : pc(a_pc), voice(a_voice->useAgain()), coordinates{0}, nextTime(0) { }
     boolean hasFinished() {
-      return !voice->hasMore(coordinates, MAX_DEPTH, 0) && isReady(millis());
+      return !voice->hasMore(coordinates, 0) && isReady(millis());
     }
     void setVoice(playable *n_voice) {
       if (voice != NULL)
@@ -92,8 +92,8 @@ class tone_player : public player {
     };
     void playIfReady(unsigned long currentMillis) {
       if (isReady(currentMillis)) {
-        if (voice->hasMore(coordinates, MAX_DEPTH, 0)) {
-          note_info ni = voice->getOne(coordinates, MAX_DEPTH, 0);
+        if (voice->hasMore(coordinates, 0)) {
+          note_info ni = voice->getOne(coordinates, 0);
           float freq = pc->get_frequency(ni);
           uint32_t dur = pc->getDurationMillis(ni);
 
@@ -117,10 +117,10 @@ class tone_player : public player {
 class nothing : public playable {
   public:
     nothing() { }
-    boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth) {
+    boolean hasMore(uint8_t *hc, uint8_t depth) {
       return false;
     }
-    struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth) {
+    struct note_info getOne(uint8_t *hc, uint8_t depth) {
       return {};   // thou shall not call getOne() when hasMore returned false
     }
     uint8_t getMaxDepth() {
@@ -141,8 +141,8 @@ class note : public playable {
 
   public:
     note(note_duration a_duration): duration(a_duration) { }
-    boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
-    struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
+    boolean hasMore(uint8_t *hc, uint8_t depth);
+    struct note_info getOne(uint8_t *hc, uint8_t depth);
     uint8_t getMaxDepth();
 };
 
@@ -158,9 +158,8 @@ class repeat_hook : public playable {
     ~repeat_hook();
   public:
     repeat_hook(playable *a_p, int a_nb_cycles = 0) : p(a_p->useAgain()), nb_cycles(a_nb_cycles) { }
-
-    boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
-    struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
+    boolean hasMore(uint8_t *hc, uint8_t depth);
+    struct note_info getOne(uint8_t *hc, uint8_t depth);
     uint8_t getMaxDepth();
 };
 
@@ -170,7 +169,7 @@ class repeat_hook : public playable {
 class list_hook : public playable {
   private:
     struct PlayableChild {
-      int8_t degreeOffset;
+      hm_offset degreeOffset;
       effects flags;
       playable *p;
     };
@@ -180,11 +179,11 @@ class list_hook : public playable {
     struct PlayableChild *list;
     ~list_hook();
   public:
-    list_hook(uint16_t a_capacity);
+    list_hook(uint8_t a_capacity);
 
     list_hook *add(playable *p, int8_t degreeOffset = 0, effects flags = 0);
-    boolean hasMore(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
-    struct note_info getOne(uint8_t *hc, uint8_t maxDepth, uint8_t depth);
+    boolean hasMore(uint8_t *hc, uint8_t depth);
+    struct note_info getOne(uint8_t *hc, uint8_t depth);
     uint8_t getMaxDepth();
 };
 
@@ -219,7 +218,7 @@ class led_metronome : public player {
         analogWrite(pulseLed, brightness);
       }
       if (this->isReady(currentMillis)) {
-        note_info ni = voice->getOne(coordinates, MAX_DEPTH, 0);
+        note_info ni = voice->getOne(coordinates, 0);
         uint32_t dur = pc->getDurationMillis(ni);
         brightness = map((uint8_t) ni.degreeOffset, 0, 15, 0, 255);
         analogWrite(pulseLed, brightness);

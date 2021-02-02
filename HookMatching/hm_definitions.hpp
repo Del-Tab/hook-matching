@@ -1,5 +1,6 @@
 #ifndef HM_DEFINITONS_HPP
 #define HM_DEFINITONS_HPP
+#include <Arduino.h> // we need the types
 /*
    please keep this reference in this file when using this code anywhere
    https://github.com/DelTa-B/hook-matching/
