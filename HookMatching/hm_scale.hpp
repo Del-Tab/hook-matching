@@ -18,7 +18,7 @@ class scale {
 class diatonic_scale : public scale {
   private:
     // TODO ref3 hide also private methods inside a class instead of a struct
-    class impl;        // things to be hidden go here
+    class impl;        // private stuff go there
     impl* pimpl_;      // opaque pointer to forward-declared class
   public:
     /*  -the number of accident on 1 char,

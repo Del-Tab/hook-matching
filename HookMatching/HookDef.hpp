@@ -4,6 +4,7 @@
 
 #include "hm_maths.hpp"
 #include "hm_scale.hpp"
+#include <Tone.h>
 
 #ifndef MAX_DEPTH
 # define MAX_DEPTH 16

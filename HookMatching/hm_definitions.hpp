@@ -1,7 +1,5 @@
 #ifndef HM_DEFINITONS_HPP
 #define HM_DEFINITONS_HPP
-#include <Tone.h>
-
 /*
    please keep this reference in this file when using this code anywhere
    https://github.com/DelTa-B/hook-matching/
@@ -48,11 +46,11 @@ extern float LA4_REF;
 
 using note_duration = uint8_t;  // 24 for a black, 48 for a white, handles triolets
 using note_t = uint8_t;         // 0 for C, 1 for D, etc.
-
+using hm_offset = int8_t;       // relative note/octave position
 
 struct note_info {
-  int8_t degreeOffset;
-  uint8_t octaveOffset;
+  hm_offset degreeOffset;
+  hm_offset octaveOffset;
   note_duration duration;
   effects flags;
 };
