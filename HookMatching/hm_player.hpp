@@ -88,6 +88,7 @@ class tone_player : public player {
     Tone *toneVoice;
   public:
     tone_player(playing_context *a_pc, uint8_t a_tonePin, playable *a_voice) : player(a_pc, a_voice), toneVoice(new Tone()) {
+      pinMode(a_tonePin, OUTPUT);
       toneVoice->begin(a_tonePin);
     };
     void playIfReady(unsigned long currentMillis) {

@@ -308,13 +308,13 @@ void(* resetFunc) (void) = 0;
 void loop() {
   if (state == 0) {
     if (rotaryEncoder != 0) {
+      cli();
       if (rotaryEncoder > 0)
         Serial.print("+");
       Serial.print(rotaryEncoder);
       Serial.print("\t");
       Serial.print(LA4_REF);
       Serial.print(" -> ");
-      cli();
       LA4_REF += rotaryEncoder;
       rotaryEncoder = 0;
       sei();
