@@ -24,7 +24,6 @@ uint32_t getNoteLengthMillis(note_duration nd, const struct sheet_dep & p);
 
 class diatonic_scale : public scale {
   private:
-    // TODO ref3 hide also private methods inside a class instead of a struct
     class impl;        // private stuff go there
     impl* pimpl_;      // opaque pointer to forward-declared class
   public:

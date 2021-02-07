@@ -13,48 +13,33 @@
 # define HM_PULSE_STEP .075
 #endif
 
-
-
 class playing_context {
   private:
     struct sheet_dep *sheetInfo;
     scale *scaleInfo;
   public:
-    playing_context(struct sheet_dep *_sheetInfo) : sheetInfo(_sheetInfo), scaleInfo(_sheetInfo->default_scale) { };
-    struct sheet_dep *getSheetInfo() {
-      return sheetInfo;
-    }
-    float get_frequency(struct note_info ni) {
-      return scaleInfo->get_frequency(ni);
-    }
-
-    uint32_t getDurationMillis(struct note_info ni) {
-      return getNoteLengthMillis(ni.duration, *sheetInfo);
-    }
-
+    playing_context(struct sheet_dep *a_sheetInfo, scale *a_scale = NULL);
+    struct sheet_dep *getSheetInfo();
+    float get_frequency(struct note_info ni);
+    uint32_t getDurationMillis(struct note_info ni);
 };
 
 class playable {
   private:
     int nb_usage;
   public:
-    //virtual int getIteratorInitCtx() = 0;
     virtual boolean hasMore(uint8_t *hc, uint8_t depth) = 0;
     virtual struct note_info getOne(uint8_t *hc, uint8_t depth)  = 0;
     virtual uint8_t getMaxDepth() = 0;
 
     // linked to the memory usage:
-    playable(): nb_usage(1) {}; // we suppose it's used once when allocated . call unuse to free
-    playable *useAgain() {
-      ++nb_usage;
-      return this;
-    }
-    void unuse() {
-      if (--nb_usage == 0) delete this;
-    }
+    playable();
+    playable *useAgain();
+    void unuse(); // call this any time you don't use the pointer anymore, it'll be freed once the counter reaches 0
 };
 
 class player {
+  // TODO ref3 : make private what shall be + hide implementation in pimpl like it's done in the diatonic_scale class
   protected:
     playing_context *pc;
     playable *voice;
@@ -76,7 +61,6 @@ class player {
       memset(coordinates, 0, sizeof coordinates);
     }
     virtual void playIfReady(unsigned long currentMillis) = 0;
-
 };
 
 
@@ -87,26 +71,8 @@ class tone_player : public player {
   private :
     Tone *toneVoice;
   public:
-    tone_player(playing_context *a_pc, uint8_t a_tonePin, playable *a_voice) : player(a_pc, a_voice), toneVoice(new Tone()) {
-      pinMode(a_tonePin, OUTPUT);
-      toneVoice->begin(a_tonePin);
-    };
-    void playIfReady(unsigned long currentMillis) {
-      if (isReady(currentMillis)) {
-        if (voice->hasMore(coordinates, 0)) {
-          note_info ni = voice->getOne(coordinates, 0);
-          float freq = pc->get_frequency(ni);
-          uint32_t dur = pc->getDurationMillis(ni);
-
-          if ((ni.flags & NOTE_IS_SILENCE) == 0)
-            toneVoice->play(round(freq), .955 * dur);
-
-          // we take into accound this loop's calculus time
-          nextTime = currentMillis + dur;
-        }
-      }
-    }
-
+    tone_player(playing_context *a_pc, uint8_t a_tonePin, playable *a_voice);
+    void playIfReady(unsigned long currentMillis);
 };
 
 
@@ -117,20 +83,12 @@ class tone_player : public player {
 */
 class nothing : public playable {
   public:
-    nothing() { }
-    boolean hasMore(uint8_t *hc, uint8_t depth) {
-      return false;
-    }
-    struct note_info getOne(uint8_t *hc, uint8_t depth) {
-      return {};   // thou shall not call getOne() when hasMore returned false
-    }
-    uint8_t getMaxDepth() {
-      return 0;
-    }
+    boolean hasMore(uint8_t *hc, uint8_t depth);
+    struct note_info getOne(uint8_t *hc, uint8_t depth);
+    uint8_t getMaxDepth();
 };
 
 static playable *THE_NOTHING = new nothing();
-
 
 
 /**
@@ -158,7 +116,7 @@ class repeat_hook : public playable {
     int nb_cycles;
     ~repeat_hook();
   public:
-    repeat_hook(playable *a_p, int a_nb_cycles = 0) : p(a_p->useAgain()), nb_cycles(a_nb_cycles) { }
+    repeat_hook(playable *a_p, int a_nb_cycles = 0);
     boolean hasMore(uint8_t *hc, uint8_t depth);
     struct note_info getOne(uint8_t *hc, uint8_t depth);
     uint8_t getMaxDepth();
@@ -194,37 +152,7 @@ class led_metronome : public player {
     unsigned int pulseLed;
     int brightness;
   public:
-    led_metronome(playing_context *_pc, unsigned int _pulseLed) : player(_pc, THE_NOTHING), pulseLed(_pulseLed), brightness(0) {
-      pinMode(pulseLed, OUTPUT);
-      uint8_t beatNoteDuration =  24 * 4 / pc->getSheetInfo()->bottom;
-      playable *beatNote = new note(beatNoteDuration);
-      list_hook *oneMeasureBeat =  new list_hook(pc->getSheetInfo()->top);
-      for (int i = 0; i <  pc->getSheetInfo()->top; ++i) {
-        if (i == 0)
-          oneMeasureBeat->add(beatNote, 15);
-        else if (i * 2 == pc->getSheetInfo()->top)
-          oneMeasureBeat->add(beatNote, 6);
-        else
-          oneMeasureBeat->add(beatNote, 2);
-      }
-      setVoice(new repeat_hook(oneMeasureBeat));
-      oneMeasureBeat->unuse();
-    }
-    void playIfReady(unsigned long currentMillis) {
-      // fade by step
-      if (brightness > 0) {
-        brightness -= HM_PULSE_STEP;
-        if (brightness < 0)
-          brightness = 0;
-        analogWrite(pulseLed, brightness);
-      }
-      if (this->isReady(currentMillis)) {
-        note_info ni = voice->getOne(coordinates, 0);
-        uint32_t dur = pc->getDurationMillis(ni);
-        brightness = map((uint8_t) ni.degreeOffset, 0, 15, 0, 255);
-        analogWrite(pulseLed, brightness);
-        nextTime = currentMillis + dur;
-      }
-    }
+    led_metronome(playing_context *_pc, unsigned int _pulseLed);
+    void playIfReady(unsigned long currentMillis);
 };
 #endif // HM_PLAYER_HPP

@@ -13,7 +13,7 @@ int hm_mod(int a, int b)
 int hm_div(int a, int b)
 {
   float ret = 1. * a / b;
-  if ((a % b) < 0)
+  if ((a % b) < 0) // detecting which implementation was chosen
     return (int)ret - 1;
   return (int)ret;
 }
