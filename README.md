@@ -10,6 +10,9 @@ playing with sound on an Arduino.
 
 I'll create a branch for each video demo you may find on the web done by me. Branch will correspond to the code when the video was recorded.
 
+## default pinout
+![Ugly but simple schematic](/media/ugly_but_simple_schematic.jpg)
+
 ## attained goals
  - allow to describe a scale
  - allow to calculate a note frequency given a scale, the degree of the note on the scale, the octave to play it 
