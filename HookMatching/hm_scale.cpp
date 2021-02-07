@@ -1,16 +1,64 @@
 #include "hm_scale.hpp"
 #include "hm_definitions.hpp"
-#include "hm_music.hpp"
+#include "hm_maths.hpp"
+#include <Arduino.h>
 
-/*BEGIN DiatonicScale implementation*/
-DiatonicScale::DiatonicScale(const char *c) {
-  octave = 5;
+static note_t sharp_refs[] = {NOTE_FA, NOTE_DO, NOTE_SOL, NOTE_RE, NOTE_LA, NOTE_MI, NOTE_SI};
+static const uint8_t diatonic_offsets[] = {0, 2, 4, 5, 7, 9, 11};
+static const uint8_t scaleSize = sizeof diatonic_offsets / sizeof diatonic_offsets[0];
+
+class diatonic_scale::impl {
+  private:
+    uint8_t sharps;        // binary map from right to left, starting from do: 1 if sharp
+    uint8_t flats;         // binary map from right to left, starting from do: 1 if flat
+    note_t note_base;        // the NOTE_something telling which note is the Tonic
+    uint8_t octave_base;        // 0 based octave offset
+  public:
+    impl(diatonic_scale *self, const char *desc);
+    int8_t getAccidentCorrection(const diatonic_scale *self, struct note_info ni);
+    bool isSharp (const diatonic_scale *self, const byte degre);
+    bool isFlat (const diatonic_scale *self, const byte degre);
+    bool isNatural (const diatonic_scale *self, const byte degre);
+    uint16_t getMidiNote(const diatonic_scale *self, const hm_offset degree_offset, const hm_offset octave_offset);
+};
+
+
+/*BEGIN diatonic_scale implementation*/
+diatonic_scale::diatonic_scale(const char *desc) {
+  pimpl_ = new impl(this, desc);
+}
+float diatonic_scale::get_frequency(struct note_info ni) {
+
+  int8_t transpose = pimpl_->getAccidentCorrection(this, ni);
+  // Getting base do (C) from current octave ...
+  int16_t offsetFromLa440 = pimpl_->getMidiNote(this, ni.degreeOffset, ni.octaveOffset) + transpose;
+  offsetFromLa440 -= 5 * 12 + diatonic_offsets[NOTE_LA]; //LA440 is on octave 5 (0 based)
+  // getting the right frequency from the ref and offset
+  float freq = LA4_REF * pow(2.0, offsetFromLa440 / 12.0);
+
+  return freq;
+}
+bool diatonic_scale::checkScaleInitParam(const char *c) {
+  if (strlen(c) != 3)
+    return false;
+  if (c[0] < '0' && c[0] > '7')
+    return false;
+  if (c[1] != '#' && c[1] != 'b')
+    return false;
+  if (c[2] != 'm' && c[1] != 'M' && c[1] < 'A' && c[1] > 'C') // either 1st note or M/m for major/minor
+    return false;
+  return true;
+}
+
+
+diatonic_scale::impl::impl(diatonic_scale *self, const char *desc) {
+  octave_base = 5;
   sharps = flats = 0;
-  uint8_t num = c[0] - '0';
+  uint8_t num = desc[0] - '0';
   if (num == 0) {
     note_base = NOTE_DO;
   } else {
-    if (c[1] == '#') {
+    if (desc[1] == '#') {
       for (uint8_t i = 0; i < num; ++i) {
         sharps |= 1 << sharp_refs[i];
       }
@@ -23,99 +71,85 @@ DiatonicScale::DiatonicScale(const char *c) {
     }
   }
   bool isMinor = false;
-  if (c[2] == 'm') {
+  if (desc[2] == 'm') {
     isMinor = true;
     note_base = hm_mod(note_base - 2 , 7);
-  } else if (c[2] != 'M') {
-    note chosen_note = hm_mod(c[2] - 'C', 7);
+  } else if (desc[2] != 'M') {
+    note_t chosen_note = hm_mod(desc[2] - 'C', 7);
     if (chosen_note == hm_mod(note_base - 2, 7))
       isMinor = true;
     note_base = chosen_note;
   }
-  display_name[0] = 'C' + note_base;
-  if (display_name[0] > 'G')
-    display_name[0] -= 7;
+  self->display_name[0] = 'C' + note_base;
+  if (self->display_name[0] > 'G')
+    self->display_name[0] -= 7;
   int writeOffset = 1;
-  if ((1 << hm_mod(note_base, 7)) & sharps)
-    display_name[writeOffset++] = '#';
-  else if ((1 << hm_mod(note_base, 7)) & flats)
-    display_name[writeOffset++] = 'b';
+  if (isSharp(self, 0))
+    self->display_name[writeOffset++] = '#';
+  if (isFlat(self, 0))
+    self->display_name[writeOffset++] = 'b';
   if (isMinor)
-    display_name[writeOffset++] = 'm';
+    self->display_name[writeOffset++] = 'm';
   else
-    display_name[writeOffset++] = 'M';
-  display_name[writeOffset++] = '\0';
+    self->display_name[writeOffset++] = 'M';
+  self->display_name[writeOffset++] = '\0';
 }
 
-int8_t DiatonicScale::getAccidentCorrection(struct note_info ni) {
+
+
+int8_t diatonic_scale::impl::getAccidentCorrection(const diatonic_scale *self, struct note_info ni) {
   int8_t transpose = 0;
   if (ni.flags & NOTE_FORCE_SHARP) {
-    if (!isSharp(ni.degreeOffset))
+    if (!isSharp(self, ni.degreeOffset))
       ++transpose;
-    if (isFlat(ni.degreeOffset))
+    if (isFlat(self, ni.degreeOffset))
       ++transpose;
   }
 
   if (ni.flags & NOTE_FORCE_FLAT) {
-    if (!isFlat(ni.degreeOffset))
+    if (!isFlat(self, ni.degreeOffset))
       --transpose;
-    if (isSharp(ni.degreeOffset))
+    if (isSharp(self, ni.degreeOffset))
       --transpose;
   }
 
   if ((ni.flags & NOTE_FORCE_NATURAL)) {
-    if (isFlat(ni.degreeOffset))
+    if (isFlat(self, ni.degreeOffset))
       ++transpose;
-    if (isSharp(ni.degreeOffset))
+    if (isSharp(self, ni.degreeOffset))
       --transpose;
   }
   return transpose;
 }
 
-bool DiatonicScale::isSharp (byte degre) {
+bool diatonic_scale::impl::isSharp (const diatonic_scale *self, const byte degre) {
   return (1 << hm_mod(degre + note_base, 7)) & sharps;
 }
 
-bool DiatonicScale::isFlat (byte degre) {
+bool diatonic_scale::impl::isFlat (const diatonic_scale *self, const byte degre) {
   return (1 << hm_mod(degre + note_base, 7)) & flats;
 }
 
-bool DiatonicScale::isNatural (byte degre) {
-  return !(isSharp(degre) ^ isFlat(degre));
+bool diatonic_scale::impl::isNatural (const diatonic_scale *self, const byte degre) {
+  return !(isSharp(self, degre) ^ isFlat(self, degre));
 }
 
-uint16_t DiatonicScale::getMidiNote(const int8_t degree, const uint8_t octave) {
-  uint16_t ret = (octave  + hm_div((degree + note_base), scaleSize)) * 12
-                 + diatonic_offsets[hm_mod((hm_mod(degree, scaleSize) + note_base), scaleSize)];
-  if (isSharp(degree))
+uint16_t diatonic_scale::impl::getMidiNote(const diatonic_scale *self, const hm_offset degree_offset, const hm_offset octave_offset) {
+  uint16_t ret = (octave_base + octave_offset  + hm_div((degree_offset + note_base), scaleSize)) * 12
+                 + diatonic_offsets[hm_mod((hm_mod(degree_offset, scaleSize) + note_base), scaleSize)];
+  if (isSharp(self, degree_offset))
     ++ret;
-  if (isFlat(degree))
+  if (isFlat(self, degree_offset))
     --ret;
   return ret;
 }
 
-float DiatonicScale::get_frequency(struct note_info ni) {
 
-  int8_t transpose = getAccidentCorrection(ni);
-  // Getting base do (C) from current octave ...
-  int16_t offsetFromLa440 = getMidiNote(ni.degreeOffset, octave + ni.octaveOffset) + transpose;
-  offsetFromLa440 -= 5 * 12 + diatonic_offsets[NOTE_LA]; //LA440 is on octave 5 (0 based)
-  // getting the right frequency from the ref and offset
-  float freq = LA4_REF * pow(2.0, offsetFromLa440 / 12.0);
 
-  return freq;
+/*END diatonic_scale implementation*/
+
+// TODO ref2 put it in a sheet class
+uint32_t getNoteLengthMillis(note_duration nd, const struct sheet_dep & p) {
+  float base_duration = 60000.0 / (p.bpm_unit * p.bpm);
+  return nd * base_duration;
 }
-bool DiatonicScale::checkScaleInitParam(const char *c) {
-
-  if (strlen(c) != 3)
-    return false;
-  if (c[0] < '0' && c[0] > '7')
-    return false;
-  if (c[1] != '#' && c[1] != 'b')
-    return false;
-  if (c[2] != 'm' && c[1] != 'M' && c[1] < 'A' && c[1] > 'C') // either 1st note or M/m for major/minor
-    return false;
-  return true;
-}
-
-/*END DiatonicScale implementation*/

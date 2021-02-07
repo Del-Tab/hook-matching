@@ -1,43 +1,43 @@
 #ifndef HM_SCALE_HPP
 #define HM_SCALE_HPP
-#include <Arduino.h>
 #include "hm_definitions.hpp"
 
-static note sharp_refs[] = {NOTE_FA, NOTE_DO, NOTE_SOL, NOTE_RE, NOTE_LA, NOTE_MI, NOTE_SI};
-static const uint8_t diatonic_offsets[] = {0, 2, 4, 5, 7, 9, 11};
-static const uint8_t scaleSize = sizeof diatonic_offsets / sizeof diatonic_offsets[0];
 
-class Scale {
-
+class scale {
   protected:
     char display_name[4];
-
   public:
     virtual float get_frequency(struct note_info ni) = 0;
     char * getName() {
       return display_name;
     }
 };
+// TODO ref2 put it in a sheet class
+struct sheet_dep {
+  scale *default_scale;
+  uint16_t bpm;           // most of the time ranges from 96 to 480, but you're free, just don't chose 0, and consider we are millisecond precise only
+  note_duration bpm_unit; // 24 when bpm is expressed on the quarter note, 48 on the half note, etc
+  uint8_t top;            // number of time unit per case
+  note_duration bottom;   // if it's 4, quarter notes are one time unit, if it's 2, half notes are 1 time unit, if it's 8 eights are 1 time unit etc
+};
+uint32_t getNoteLengthMillis(note_duration nd, const struct sheet_dep & p);
 
-
-class DiatonicScale : public Scale {
+class diatonic_scale : public scale {
   private:
-    uint8_t sharps;        // binary map from right to left, starting from do: 1 if sharp
-    uint8_t flats;         // binary map from right to left, starting from do: 1 if flat
-    note note_base;        // the NOTE_something telling which note is the Tonic
-    uint8_t octave;        // 0 based octave offset
-    int8_t getAccidentCorrection(struct note_info ni);
-    bool isSharp (byte degre);
-    bool isFlat (byte degre);
-    bool isNatural (byte degre);
-    uint16_t getMidiNote(const int8_t degree, const uint8_t octave);
+    // TODO ref3 hide also private methods inside a class instead of a struct
+    class impl;        // private stuff go there
+    impl* pimpl_;      // opaque pointer to forward-declared class
   public:
-    /* the number of accident, # if accidents are sharps, b if they are flats, then M for major, m for minor
-      doM -> "0#M" or "0bM" are valid
-      lam -> "0#m" or "0bm" are valid
+    /*  -the number of accident on 1 char,
+        -then # if accidents are sharps, b if they are flats,
+        -then M for major, m for minor or the base note
+      minorE -> "1#m" or "1#E"
+      majorF -> "1bM" of "1bF"
+      majorC -> "0#M" or "0bM" (or "0#C" or "0bC")
+      minorA -> "0#m" or "0bm" (or "0#A" or "0bA")
     */
-    static bool checkScaleInitParam(const char *c);
-    DiatonicScale(const char *c);
+    static bool checkScaleInitParam(const char *desc);
+    diatonic_scale(const char *desc);
     float get_frequency(struct note_info ni);
 };
 
