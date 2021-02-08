@@ -1,3 +1,8 @@
+/*
+   please keep this reference in this file when using this code anywhere
+   https://github.com/DelTa-B/hook-matching/
+   I would be glad if you give this link when you take part of this file :)
+*/
 #include "hm_player.hpp"
 
 //////////////////////////
@@ -22,16 +27,19 @@ playing_context::playing_context(struct sheet_dep *a_sheetInfo, scale *a_scale) 
 struct sheet_dep *playing_context::getSheetInfo() {
   return sheetInfo;
 }
-float playing_context::get_frequency(struct note_info ni) {
+float playing_context::get_frequency(const struct note_info *ni) {
   return scaleInfo->get_frequency(ni);
 }
 
-uint32_t playing_context::getDurationMillis(struct note_info ni) {
-  return getNoteLengthMillis(ni.duration, *sheetInfo);
+uint32_t playing_context::getDurationMillis(const struct note_info *ni) {
+  return getNoteLengthMillis(ni->duration, sheetInfo);
 }
 
 
 
+//////////////////////////
+// playable             //
+//////////////////////////
 // linked to the memory usage:
 playable::playable(): nb_usage(1) {}; // we suppose it's used once when allocated . call unuse() to free
 playable *playable::useAgain() {
@@ -42,11 +50,30 @@ void playable::unuse() {
   if (--nb_usage == 0) delete this;
 }
 
+//////////////////////////
+// player               //
+//////////////////////////
+boolean player::isReady(unsigned long millis) {
+  return nextTime <= millis;
+}
+player::player(playing_context *a_pc, playable *a_voice) : pc(a_pc), voice(a_voice->useAgain()), coordinates{0}, nextTime(0) { }
+boolean player::hasFinished() {
+  return !voice->hasMore(coordinates, 0) && isReady(millis());
+}
+void player::setVoice(playable *n_voice) {
+  if (voice != NULL)
+    voice->unuse();
+  voice = n_voice->useAgain();
+  // reset coordinates
+  memset(coordinates, 0, sizeof coordinates);
+}
+
+
 
 //////////////////////////
 // Repeat Hook          //
 //////////////////////////
-repeat_hook::repeat_hook(playable *a_p, int a_nb_cycles) : p(a_p->useAgain()), nb_cycles(a_nb_cycles) { };
+repeat_hook::repeat_hook(playable *a_p, uint8_t a_nb_cycles) : p(a_p->useAgain()), nb_cycles(a_nb_cycles) { };
 repeat_hook::~repeat_hook() {
   p->unuse();
 }
@@ -87,7 +114,6 @@ list_hook::~list_hook() {
     free(list);
   }
 }
-
 list_hook *list_hook::add(playable *p, hm_offset degreeOffset, effects flags) {
   list[number++] = {degreeOffset, flags, p->useAgain()};
   maxDepth = max(maxDepth, p->getMaxDepth() + 1);
@@ -115,8 +141,10 @@ struct note_info list_hook::getOne(uint8_t *hc, uint8_t depth) {
 uint8_t list_hook::getMaxDepth() {
   return maxDepth;
 }
-
-led_metronome::led_metronome(playing_context *_pc, unsigned int _pulseLed) : player(_pc, THE_NOTHING), pulseLed(_pulseLed), brightness(0) {
+//////////////////////////
+// led metronome        //
+//////////////////////////
+led_metronome::led_metronome(playing_context *_pc, uint8_t _pulseLed) : player(_pc, THE_NOTHING), pulseLed(_pulseLed), brightness(0) {
   pinMode(pulseLed, OUTPUT);
   uint8_t beatNoteDuration =  24 * 4 / pc->getSheetInfo()->bottom;
   playable *beatNote = new note(beatNoteDuration);
@@ -143,14 +171,16 @@ void led_metronome::playIfReady(unsigned long currentMillis) {
   }
   if (this->isReady(currentMillis)) {
     note_info ni = voice->getOne(coordinates, 0);
-    uint32_t dur = pc->getDurationMillis(ni);
+    uint32_t dur = pc->getDurationMillis(&ni);
     brightness = map((uint8_t) ni.degreeOffset, 0, 15, 0, 255);
     analogWrite(pulseLed, brightness);
     nextTime = currentMillis + dur;
   }
 }
 
-
+//////////////////////////
+// Dummy playable       //
+//////////////////////////
 boolean nothing::hasMore(uint8_t *hc, uint8_t depth) {
   return false;
 }
@@ -162,7 +192,9 @@ uint8_t nothing::getMaxDepth() {
 }
 
 
-
+//////////////////////////
+// a tone player        //
+//////////////////////////
 tone_player::tone_player(playing_context *a_pc, uint8_t a_tonePin, playable *a_voice) : player(a_pc, a_voice), toneVoice(new Tone()) {
   pinMode(a_tonePin, OUTPUT);
   toneVoice->begin(a_tonePin);
@@ -171,8 +203,8 @@ void tone_player::playIfReady(unsigned long currentMillis) {
   if (isReady(currentMillis)) {
     if (voice->hasMore(coordinates, 0)) {
       note_info ni = voice->getOne(coordinates, 0);
-      float freq = pc->get_frequency(ni);
-      uint32_t dur = pc->getDurationMillis(ni);
+      float freq = pc->get_frequency(&ni);
+      uint32_t dur = pc->getDurationMillis(&ni);
 
       if ((ni.flags & NOTE_IS_SILENCE) == 0)
         toneVoice->play(round(freq), .955 * dur);

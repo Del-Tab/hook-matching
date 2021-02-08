@@ -1,18 +1,19 @@
-#ifndef HM_DEFINITONS_HPP
-#define HM_DEFINITONS_HPP
-#include <Arduino.h> // we need the types
 /*
    please keep this reference in this file when using this code anywhere
    https://github.com/DelTa-B/hook-matching/
    I would be glad if you give this link when you take part of this file :)
 */
+#ifndef HM_DEFINITONS_HPP
+#define HM_DEFINITONS_HPP
+#include <Arduino.h> // we need the types
+
 
 using effects = uint8_t;
-#define NOTE_IS_SILENCE 1
-#define NOTE_STICKS_TO_NEXT 2
-#define NOTE_FORCE_SHARP 4
-#define NOTE_FORCE_FLAT 8
-#define NOTE_FORCE_NATURAL 16
+#define NOTE_IS_SILENCE     B00000001
+#define NOTE_STICKS_TO_NEXT B00000010
+#define NOTE_FORCE_SHARP    B00000100
+#define NOTE_FORCE_FLAT     B00001000
+#define NOTE_FORCE_NATURAL  B00010000
 
 #define NOTE_DO 0
 #define NOTE_RE 1
@@ -43,7 +44,7 @@ using effects = uint8_t;
 #define NOTE_SENSIBLE NOTE_SEPTIEME
 #define NOTE_OCTAVE 7;
 
-extern float LA4_REF;
+extern float LA4_REF; // the frequency of LA (most of the time 440.0 hz)
 
 using note_duration = uint8_t;  // 24 for a black, 48 for a white, handles triolets
 using note_t = uint8_t;         // 0 for C, 1 for D, etc.

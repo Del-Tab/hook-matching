@@ -8,7 +8,7 @@
    WARNING for this program to work (in current version) you need to download the Tone library by Brett Hagman
    You may find this library in the Arduino IDE market place (under Tools-> manage libraries)
    or download it on Brett Hagman's github here: https://github.com/bhagman/Tone
-   on Arduino Mega 2560 R3, you must modify it to handle all the available timers
+   on Arduino Mega 2560 R3, you must modify it to handle all the available timers (if you downloaded through arduino IDE)
    - Open, from your Arduino install folder,
      the file libraries/Tone/Tone.cpp.
    - Replace every occurence of

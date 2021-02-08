@@ -1,3 +1,8 @@
+/*
+   please keep this reference in this file when using this code anywhere
+   https://github.com/DelTa-B/hook-matching/
+   I would be glad if you give this link when you take part of this file :)
+*/
 #include "hm_scale.hpp"
 #include "hm_definitions.hpp"
 #include "hm_maths.hpp"
@@ -11,11 +16,11 @@ class diatonic_scale::impl {
   private:
     uint8_t sharps;        // binary map from right to left, starting from do: 1 if sharp
     uint8_t flats;         // binary map from right to left, starting from do: 1 if flat
-    note_t note_base;        // the NOTE_something telling which note is the Tonic
-    uint8_t octave_base;        // 0 based octave offset
+    note_t note_base;      // the NOTE_something telling which note is the Tonic
+    uint8_t octave_base;   // 0 based octave offset
   public:
     impl(diatonic_scale *self, const char *desc);
-    int8_t getAccidentCorrection(const diatonic_scale *self, struct note_info ni);
+    int8_t getAccidentCorrection(const diatonic_scale *self, const struct note_info *ni);
     bool isSharp (const diatonic_scale *self, const byte degre);
     bool isFlat (const diatonic_scale *self, const byte degre);
     bool isNatural (const diatonic_scale *self, const byte degre);
@@ -27,12 +32,12 @@ class diatonic_scale::impl {
 diatonic_scale::diatonic_scale(const char *desc) {
   pimpl_ = new impl(this, desc);
 }
-float diatonic_scale::get_frequency(struct note_info ni) {
+float diatonic_scale::get_frequency(const struct note_info *ni) {
 
   int8_t transpose = pimpl_->getAccidentCorrection(this, ni);
   // Getting base do (C) from current octave ...
-  int16_t offsetFromLa440 = pimpl_->getMidiNote(this, ni.degreeOffset, ni.octaveOffset) + transpose;
-  offsetFromLa440 -= 5 * 12 + diatonic_offsets[NOTE_LA]; //LA440 is on octave 5 (0 based)
+  int16_t offsetFromLa440 = pimpl_->getMidiNote(this, ni->degreeOffset, ni->octaveOffset) + transpose;
+  offsetFromLa440 -= 5 * 12 + diatonic_offsets[NOTE_LA]; // LA440 is on octave 5 (0 based to us)
   // getting the right frequency from the ref and offset
   float freq = LA4_REF * pow(2.0, offsetFromLa440 / 12.0);
 
@@ -82,7 +87,7 @@ diatonic_scale::impl::impl(diatonic_scale *self, const char *desc) {
   }
   self->display_name[0] = 'C' + note_base;
   if (self->display_name[0] > 'G')
-    self->display_name[0] -= 7;
+    self->display_name[0] -= 7; // A->G instead of C->I
   int writeOffset = 1;
   if (isSharp(self, 0))
     self->display_name[writeOffset++] = '#';
@@ -97,26 +102,26 @@ diatonic_scale::impl::impl(diatonic_scale *self, const char *desc) {
 
 
 
-int8_t diatonic_scale::impl::getAccidentCorrection(const diatonic_scale *self, struct note_info ni) {
+int8_t diatonic_scale::impl::getAccidentCorrection(const diatonic_scale *self, const struct note_info *ni) {
   int8_t transpose = 0;
-  if (ni.flags & NOTE_FORCE_SHARP) {
-    if (!isSharp(self, ni.degreeOffset))
+  if (ni->flags & NOTE_FORCE_SHARP) {
+    if (!isSharp(self, ni->degreeOffset))
       ++transpose;
-    if (isFlat(self, ni.degreeOffset))
+    if (isFlat(self, ni->degreeOffset))
       ++transpose;
   }
 
-  if (ni.flags & NOTE_FORCE_FLAT) {
-    if (!isFlat(self, ni.degreeOffset))
+  if (ni->flags & NOTE_FORCE_FLAT) {
+    if (!isFlat(self, ni->degreeOffset))
       --transpose;
-    if (isSharp(self, ni.degreeOffset))
+    if (isSharp(self, ni->degreeOffset))
       --transpose;
   }
 
-  if ((ni.flags & NOTE_FORCE_NATURAL)) {
-    if (isFlat(self, ni.degreeOffset))
+  if ((ni->flags & NOTE_FORCE_NATURAL)) {
+    if (isFlat(self, ni->degreeOffset))
       ++transpose;
-    if (isSharp(self, ni.degreeOffset))
+    if (isSharp(self, ni->degreeOffset))
       --transpose;
   }
   return transpose;
@@ -149,7 +154,7 @@ uint16_t diatonic_scale::impl::getMidiNote(const diatonic_scale *self, const hm_
 /*END diatonic_scale implementation*/
 
 // TODO ref2 put it in a sheet class
-uint32_t getNoteLengthMillis(note_duration nd, const struct sheet_dep & p) {
-  float base_duration = 60000.0 / (p.bpm_unit * p.bpm);
+uint32_t getNoteLengthMillis(note_duration nd, const struct sheet_dep *p) {
+  float base_duration = 60000.0 / (p->bpm_unit * p->bpm);
   return nd * base_duration;
 }

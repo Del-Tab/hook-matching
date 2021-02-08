@@ -1,3 +1,8 @@
+/*
+   please keep this reference in this file when using this code anywhere
+   https://github.com/DelTa-B/hook-matching/
+   I would be glad if you give this link when you take part of this file :)
+*/
 #ifndef HM_PLAYER_HPP
 #define HM_PLAYER_HPP
 
@@ -20,13 +25,13 @@ class playing_context {
   public:
     playing_context(struct sheet_dep *a_sheetInfo, scale *a_scale = NULL);
     struct sheet_dep *getSheetInfo();
-    float get_frequency(struct note_info ni);
-    uint32_t getDurationMillis(struct note_info ni);
+    float get_frequency(const struct note_info *ni);
+    uint32_t getDurationMillis(const struct note_info *ni);
 };
 
 class playable {
   private:
-    int nb_usage;
+    unsigned int nb_usage;
   public:
     virtual boolean hasMore(uint8_t *hc, uint8_t depth) = 0;
     virtual struct note_info getOne(uint8_t *hc, uint8_t depth)  = 0;
@@ -43,23 +48,14 @@ class player {
   protected:
     playing_context *pc;
     playable *voice;
+    // TODO ref1 : better coordinates
     uint8_t coordinates[MAX_DEPTH];
     unsigned long nextTime;
-    boolean isReady(unsigned long millis) {
-      return nextTime <= millis;
-    }
+    boolean isReady(unsigned long millis);
   public:
-    player(playing_context *a_pc, playable *a_voice) : pc(a_pc), voice(a_voice->useAgain()), coordinates{0}, nextTime(0) { }
-    boolean hasFinished() {
-      return !voice->hasMore(coordinates, 0) && isReady(millis());
-    }
-    void setVoice(playable *n_voice) {
-      if (voice != NULL)
-        voice->unuse();
-      voice = n_voice->useAgain();
-      // reset coordinates
-      memset(coordinates, 0, sizeof coordinates);
-    }
+    player(playing_context *a_pc, playable *a_voice);
+    boolean hasFinished();
+    void setVoice(playable *n_voice);
     virtual void playIfReady(unsigned long currentMillis) = 0;
 };
 
@@ -113,10 +109,10 @@ class note : public playable {
 class repeat_hook : public playable {
   private:
     playable *p;
-    int nb_cycles;
+    uint8_t nb_cycles;
     ~repeat_hook();
   public:
-    repeat_hook(playable *a_p, int a_nb_cycles = 0);
+    repeat_hook(playable *a_p, uint8_t a_nb_cycles = 0);
     boolean hasMore(uint8_t *hc, uint8_t depth);
     struct note_info getOne(uint8_t *hc, uint8_t depth);
     uint8_t getMaxDepth();
@@ -152,7 +148,7 @@ class led_metronome : public player {
     unsigned int pulseLed;
     int brightness;
   public:
-    led_metronome(playing_context *_pc, unsigned int _pulseLed);
+    led_metronome(playing_context *_pc, uint8_t _pulseLed);
     void playIfReady(unsigned long currentMillis);
 };
 #endif // HM_PLAYER_HPP

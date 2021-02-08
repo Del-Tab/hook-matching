@@ -1,3 +1,8 @@
+/*
+   please keep this reference in this file when using this code anywhere
+   https://github.com/DelTa-B/hook-matching/
+   I would be glad if you give this link when you take part of this file :)
+*/
 #include "hm_maths.hpp"
 
 int hm_mod(int a, int b)

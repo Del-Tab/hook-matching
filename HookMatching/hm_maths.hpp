@@ -1,3 +1,8 @@
+/*
+   please keep this reference in this file when using this code anywhere
+   https://github.com/DelTa-B/hook-matching/
+   I would be glad if you give this link when you take part of this file :)
+*/
 #ifndef HM_MATHS_HPP
 #define HM_MATHS_HPP
 
@@ -13,6 +18,6 @@ int hm_mod(int a, int b);
 */
 int hm_div(int a, int b);
 
-/*Puf fft and hook processing somewhere ?*/
+/*Put fft and hook compression processing somewhere in here ?*/
 
 #endif // HM_MATHS_HPP

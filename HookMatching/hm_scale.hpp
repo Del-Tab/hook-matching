@@ -1,3 +1,8 @@
+/*
+   please keep this reference in this file when using this code anywhere
+   https://github.com/DelTa-B/hook-matching/
+   I would be glad if you give this link when you take part of this file :)
+*/
 #ifndef HM_SCALE_HPP
 #define HM_SCALE_HPP
 #include "hm_definitions.hpp"
@@ -7,12 +12,12 @@ class scale {
   protected:
     char display_name[4];
   public:
-    virtual float get_frequency(struct note_info ni) = 0;
+    virtual float get_frequency(const struct note_info *ni) = 0;
     char * getName() {
       return display_name;
     }
 };
-// TODO ref2 put it in a sheet class
+// TODO ref2 put it in a sheet class, this will allow to change bpm on the fly
 struct sheet_dep {
   scale *default_scale;
   uint16_t bpm;           // most of the time ranges from 96 to 480, but you're free, just don't chose 0, and consider we are millisecond precise only
@@ -20,7 +25,7 @@ struct sheet_dep {
   uint8_t top;            // number of time unit per case
   note_duration bottom;   // if it's 4, quarter notes are one time unit, if it's 2, half notes are 1 time unit, if it's 8 eights are 1 time unit etc
 };
-uint32_t getNoteLengthMillis(note_duration nd, const struct sheet_dep & p);
+uint32_t getNoteLengthMillis(note_duration nd, const struct sheet_dep *p);
 
 class diatonic_scale : public scale {
   private:
@@ -37,7 +42,7 @@ class diatonic_scale : public scale {
     */
     static bool checkScaleInitParam(const char *desc);
     diatonic_scale(const char *desc);
-    float get_frequency(struct note_info ni);
+    float get_frequency(const struct note_info *ni);
 };
 
 
