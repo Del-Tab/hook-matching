@@ -11,7 +11,7 @@ playing with sound on an Arduino.
 I'll create a branch for each video demo you may find on the web done by me. Branch will correspond to the code when the video was recorded.
 
 ## default pinout
-![Ugly but simple schematic](/media/ugly_but_simple_schematic.jpg)
+![How to connect component on your Arduino Mega2560](/media/wiring_schematic.pdf)
 
 ## attained goals
  - allow to describe a scale
@@ -29,8 +29,12 @@ I'll create a branch for each video demo you may find on the web done by me. Bra
  - a hook can be a list of Playable_s
  - fetching hook data and playing them is asynchronous (you can handle several voices together)
  - play several notes / frequency at the same time (on the same buzzer) while still being time-coordinated
- 
+ - a waveform generator and an harmonic analyser (libreOffice Calc document)
+ - created a simplified kiCad schematic
+ - clean up the code and make it easy to use
+
 ## future goals:
+ - switch to more than 3 tone voices because this blocks everything
  - read a hook in advance to allow linking notes together
  - implement a synchroniation hook
  - implement state changing hook (changing the scale for example)
@@ -38,7 +42,7 @@ I'll create a branch for each video demo you may find on the web done by me. Bra
  - handle max hook recursion level to avoid loops (there is a MAX macro, coordinates depend on it, but no control for now)
  - having a registry of already existing hook to avoid memory overuse and leaks
  - learn the English wordings for music stuff and translate it :)
- - clean up the code and make it easy to use
+ - clean up the code (again) and make it yet easier to use
  - guess which chord to play along with the played music
  - an engine to find better hook representation for a whole partition
  - implement a recycled memory pool to avoid malloc fragmentation
@@ -54,7 +58,7 @@ I'll create a branch for each video demo you may find on the web done by me. Bra
 
 
 following part is only updated on demo releases, there is not any reference play to compare size efficiency yet.
-Compile output for this release (programmer = AVRISP MKII, board = Arduino Mega or Mega 2560): 
+Compile output for this release (programmer = AVRISP MKII, board = Arduino Mega or Mega 2560, Processor ATmega2560): 
 
-Sketch uses 15264 bytes (6%) of program storage space. Maximum is 253952 bytes.
-Global variables use 481 bytes (5%) of dynamic memory, leaving 7711 bytes for local variables. Maximum is 8192 bytes.
+Sketch uses 17978 bytes (7%) of program storage space. Maximum is 253952 bytes.
+Global variables use 500 bytes (6%) of dynamic memory, leaving 7692 bytes for local variables. Maximum is 8192 bytes.
