@@ -10,8 +10,22 @@ playing with sound on an Arduino.
 
 I'll create a branch for each video demo you may find on the web done by me. Branch will correspond to the code when the video was recorded.
 
-## default pinout
+## electronic component
+Current project status uses:
+ * 1x Arduino Mega 2560 Rev3 microcontroler
+ * 2x LED
+ * 2x 220Ω resistors
+ * 3x 47Ω resistors 
+ * 1x 10 kΩ potentiometer
+ * 1x 3W/4Ω Speaker
+ * 1x rotary encoder with push button (unused yet)
+
 ![How to connect component on your Arduino Mega2560](/media/wiring_schematic.pdf)
+
+## software tools
+ * You need the Arduino IDE free software to compile and push the code to the microcontroler, available [here](https://www.arduino.cc/en/software)
+ * You need the libreoffice free software to open the media/waveformsGeneration.ods file, which will help you design new waveforms using harmonics amplitudes or extract harmonic amplitudes from a recorded waveform. It's available [here](https://www.libreoffice.org/download/download/)
+ 
 
 ## attained goals
  - allow to describe a scale
@@ -26,7 +40,7 @@ I'll create a branch for each video demo you may find on the web done by me. Bra
  - handling a silence flag
  - handling a "force sharp", a "force flat" and a "force natural" flags
  - demo with a song using several times the same hook on different starting points
- - a hook can be a list of Playable_s
+ - a hook can be a list of Playable\_s
  - fetching hook data and playing them is asynchronous (you can handle several voices together)
  - play several notes / frequency at the same time (on the same buzzer) while still being time-coordinated
  - a waveform generator and an harmonic analyser (libreOffice Calc document)
