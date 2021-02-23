@@ -11,7 +11,7 @@ playing with sound on an Arduino.
 I'll create a branch for each video demo you may find on the web done by me. Branch will correspond to the code when the video was recorded.
 
 ## default pinout
-![Ugly but simple schematic](/media/wiring_schematic.pdf)
+![How to connect component on your Arduino Mega2560](/media/wiring_schematic.pdf)
 
 ## attained goals
  - allow to describe a scale
