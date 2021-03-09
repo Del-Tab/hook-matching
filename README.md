@@ -16,15 +16,15 @@ Current project status uses:
  * 2x LED
  * 2x 220Ω resistors
  * 3x 47Ω resistors 
- * 1x 10 kΩ potentiometer
- * 1x 3W/4Ω Speaker
- * 1x rotary encoder with push button (unused yet)
+ * 1x 10kΩ potentiometer
+ * 1x 3W/4Ω audio speaker
+ * 1x rotary encoder with push button (the push button is not used yet)
 
 ![How to connect component on your Arduino Mega2560](/media/wiring_schematic.pdf)
 
 ## software tools
- * You need the Arduino IDE free software to compile and push the code to the microcontroler, available [here](https://www.arduino.cc/en/software)
- * You need the libreoffice free software to open the media/waveformsGeneration.ods file, which will help you design new waveforms using harmonics amplitudes or extract harmonic amplitudes from a recorded waveform. It's available [here](https://www.libreoffice.org/download/download/)
+ * You need the Arduino IDE free software to compile and push the code to the microcontroler, available [here](https://www.arduino.cc/en/software).
+ * You need the libreoffice free software to open the media/waveformsGeneration.ods file, which will help you design new waveforms using harmonics amplitudes or extract harmonic amplitudes from a recorded waveform. It's available [here](https://www.libreoffice.org/download/download/).
  
 
 ## attained goals
@@ -49,6 +49,8 @@ Current project status uses:
 
 ## future goals:
  - switch to more than 3 tone voices because this blocks everything
+ - hook to lilypond format translation (lilypondPlayer ?)
+ - lilypond format to hook translation
  - read a hook in advance to allow linking notes together
  - implement a synchroniation hook
  - implement state changing hook (changing the scale for example)

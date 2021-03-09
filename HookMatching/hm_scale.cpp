@@ -110,6 +110,14 @@ int8_t diatonic_scale::impl::getAccidentCorrection(const diatonic_scale *self, c
     if (isFlat(self, ni->degreeOffset))
       ++transpose;
   }
+  if (ni->flags & NOTE_FORCE_DOUBLE_SHARP) {
+    ++transpose;
+    if (!isSharp(self, ni->degreeOffset))
+      ++transpose;
+    if (isFlat(self, ni->degreeOffset))
+      ++transpose;
+  }
+  
 
   if (ni->flags & NOTE_FORCE_FLAT) {
     if (!isFlat(self, ni->degreeOffset))
@@ -117,6 +125,14 @@ int8_t diatonic_scale::impl::getAccidentCorrection(const diatonic_scale *self, c
     if (isSharp(self, ni->degreeOffset))
       --transpose;
   }
+  if (ni->flags & NOTE_FORCE_DOUBLE_FLAT) {
+    --transpose;
+    if (!isFlat(self, ni->degreeOffset))
+      --transpose;
+    if (isSharp(self, ni->degreeOffset))
+      --transpose;
+  }
+
 
   if ((ni->flags & NOTE_FORCE_NATURAL)) {
     if (isFlat(self, ni->degreeOffset))
