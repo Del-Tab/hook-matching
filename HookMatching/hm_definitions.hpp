@@ -5,7 +5,30 @@
 */
 #ifndef HM_DEFINITONS_HPP
 #define HM_DEFINITONS_HPP
+
 #include <Arduino.h> // we need the types
+#include <avr/pgmspace.h>
+
+#ifndef HM_DAC_PLAYER_CS
+# define HM_DAC_PLAYER_CS 53
+#endif
+#ifndef HM_SAMPLE_FREQUENCY
+//225 * referenceFrequency | si8=3951
+// that means that frequencies above referenceFrequency will use less samples
+# define HM_SAMPLE_FREQUENCY 1011473L// 11025
+#endif
+#ifndef HM_TIMER_PRESCALER
+# define HM_TIMER_PRESCALER 1
+#endif
+
+// the higher the resolution, the lower the number of voices to fit in 16bits
+using dac_data = uint16_t;
+#ifndef HM_DAC_RESOLUTION
+# define HM_DAC_RESOLUTION 12
+#endif
+#ifndef HM_MAX_VOICE
+#define HM_MAX_VOICE 16
+#endif
 
 
 using effects = uint8_t;

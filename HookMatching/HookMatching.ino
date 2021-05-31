@@ -1,7 +1,10 @@
-
+#define HM_DAC_PLAYER_CS 53
+#define HM_DAC_RESOLUTION 12
 #include "hm_player.hpp"
 #include <avr/sleep.h>
 #include "hm_scale.hpp"
+#include <SPI.h>
+
 /*
    This program is available, and maintained (maybe ;-) ) here: https://github.com/DelTa-B/hook-matching
 
@@ -20,9 +23,10 @@
        and it already breaks PWM.
 */
 // pins for playing sound (one per voice) if you are using the tone_player implementation (which will be removed one day because number of voices is too limited)
-static int voicePin1 = 22;
-static int voicePin2 = 24;
-static int voicePin3 = 26;
+static const int voicePin1 = 22;
+static const int voicePin2 = 24;
+static const int voicePin3 = 26;
+
 // pin for led telling which state we are in
 #define stateLed 23 // digital pin 23 will be on on playing state
 
@@ -269,15 +273,32 @@ playable *tourdionVoice3 = (new list_hook(5))->add(new repeat_hook(fullCase, 2),
 
 int state = 0; // playing
 void setup() {
+  
+  
   // we can create a player without setting what to play now on 1st player, we can use THE_NOTHING which will play nothing if the player is called
   p1 = new tone_player(pc, voicePin1, THE_NOTHING);
   p2 = new tone_player(pc, voicePin2, tourdionVoice2);
-  p3 = new tone_player(pc, voicePin3, tourdionVoice3);
+  p3 = new dac_player(pc, THE_SIN, tourdionVoice3);
 
   pinMode(stateLed, OUTPUT);
   pinMode(CHA, INPUT_PULLUP);
   pinMode(CHB, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(CHA), interruptLowCHA, LOW);
+
+  pinMode(HM_DAC_PLAYER_CS, OUTPUT);
+  digitalWrite(HM_DAC_PLAYER_CS, HIGH);
+  SPI.begin();
+  SPI.setBitOrder(MSBFIRST);
+  SPI.setDataMode(SPI_MODE0);
+  // we'll use timer4 (16bits)
+  cli(); // disable timer
+  
+  TCCR4A = 0;
+  TCCR4B = (1 << WGM42) | (1 << CS40); //clear timer on compare (CTC), no prescaling, reset timer after <OCR4A> cycles
+  OCR4A = 16000000L / ( HM_TIMER_PRESCALER * HM_SAMPLE_FREQUENCY) - 1 ; // sampling interval
+  // TODO use TIMER4_COMPA_vect once we're rid of Tone.cpp OCIE4B -> OCIE4A
+  TIMSK4 = (1 << OCIE4B); //enable interrupt on
+  sei();
   Serial.begin(9600);
   // test scale constructor
   scale *s1 = new diatonic_scale("3#M");
@@ -304,11 +325,13 @@ void setup() {
   digitalWrite(stateLed, HIGH);
   p1->setVoice(tourdionVoice1);
 }
+
 void(* resetFunc) (void) = 0;
+
 void loop() {
   if (state == 0) {
     if (rotaryEncoder != 0) {
-      cli();
+      cli(); // forbid interrupts
       if (rotaryEncoder > 0)
         Serial.print("+");
       Serial.print(rotaryEncoder);
@@ -317,7 +340,7 @@ void loop() {
       Serial.print(" -> ");
       LA4_REF += rotaryEncoder;
       rotaryEncoder = 0;
-      sei();
+      sei(); // allow interrupts
       Serial.println(LA4_REF);
     }
     unsigned long currentMillis = millis();

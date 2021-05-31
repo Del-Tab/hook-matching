@@ -214,3 +214,73 @@ void tone_player::playIfReady(unsigned long currentMillis) {
     }
   }
 }
+
+volatile waveform *waveforms[HM_MAX_VOICE];
+volatile uint8_t  isActive[HM_MAX_VOICE];
+volatile uint16_t waveform_offset[HM_MAX_VOICE];
+volatile float  frequencies[HM_MAX_VOICE];
+
+volatile static uint8_t hm_last_voice = 0;
+
+// interrupt that mixes voices
+// uint16_t can handle 16 12bits voices
+ISR(TIMER4_COMPB_vect) {
+  // TODO use TIMER4_COMPA_vect once we're rid of Tone.cpp
+  dac_data dacValue = 0;
+  if (hm_last_voice > 0) {
+    for (int i = 0; i < hm_last_voice; ++i) {
+      if (isActive[i]) {
+        // set value and calculate next offset
+        dacValue += pgm_read_word_near(waveforms[i]->wave[i][waveform_offset[i]]);
+        waveform_offset[i] = (waveform_offset[i] + round(waveforms[i]->len/ HM_SAMPLE_FREQUENCY /frequencies[i]))% waveforms[i]->len;
+
+      } else {
+        // add the switched zero
+        dacValue += 2<<(HM_DAC_RESOLUTION - 1);
+      }
+    }
+    dacValue /= hm_last_voice;
+    //send dac value to dac
+  }
+
+}
+
+
+class dac_player::impl {
+  public:
+    uint8_t voice;
+    impl(dac_player *self, waveform* a_waveform) : voice(hm_last_voice) {
+      if (hm_last_voice < HM_MAX_VOICE) {
+        waveforms[hm_last_voice] = a_waveform;
+        waveform_offset[hm_last_voice] = 0;
+        ++hm_last_voice;
+      }
+    }
+};
+
+dac_player::dac_player(playing_context *a_pc, waveform* a_waveform, playable *a_voice) : player(a_pc, a_voice) {
+  pimpl_ = new impl(this, a_waveform);
+};
+void dac_player::playIfReady(unsigned long currentMillis) {
+  
+  if (isReady(currentMillis)) {
+    if (voice->hasMore(coordinates, 0)) {
+      note_info ni = voice->getOne(coordinates, 0);
+      float freq = pc->get_frequency(&ni);
+      uint32_t dur = pc->getDurationMillis(&ni);
+
+      if ((ni.flags & NOTE_IS_SILENCE) == 0) {
+        isActive[pimpl_->voice] = 1;
+        frequencies[pimpl_->voice] = freq;
+        //todo:  something with duration if not linked to next note
+      } else {
+        isActive[pimpl_->voice] = 0;
+      }
+
+      // we take into accound this loop's calculus time
+      nextTime = currentMillis + dur;
+    } else {
+      isActive[pimpl_->voice] = 0;
+    }
+  }
+}
